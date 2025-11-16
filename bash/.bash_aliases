@@ -183,6 +183,7 @@ alias nl='nl -ba'
 alias md='mkdir -p'
 alias rd='rmdir'
 alias t='tail -n 50'
+alias rmimages='find . -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.gif" -o -iname "*.webp" -o -iname "*.avif" -o -iname "*.bmp" -o -iname "*.tiff" -o -iname "*.tif" -o -iname "*.heic" -o -iname "*.heif" \) -delete'
 alias rmempty='find . -type d -empty -delete'
 alias cpv='rsync -ah --info=progress2'   # cp with progress
 alias iplan='ip -4 addr show'
