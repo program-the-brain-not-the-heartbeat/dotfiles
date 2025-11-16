@@ -134,7 +134,7 @@ rmtrickplay() {
 # TODO: functions for rclone, duplicacy, etc.
 # TODO: Scripts for productivity and normal server admin
 # TODO: Set facl, with mask, defaults, etc.
-# TODO: Bitwarden Send 
+# TODO: Bitwarden Send
 
 alias nrw='npm run watch'
 alias nrp='npm run prod'
@@ -326,6 +326,7 @@ alias path='echo "$PATH" | tr ":" "\n"'
 alias fstab='cat /etc/fstab'
 alias findapp='ps aux | grep -i'
 alias killapp='sudo kill -9'
+alias killappbyname='function _killapp(){ pkill -9 -f "$1"; }; _killapp'
 alias weather='curl -s -A curl wttr.in | sed "$ d"'
 alias w='curl -s wttr.in/?format=3'
 alias ye='curl -s https://api.kanye.rest | jq -r .quote'
