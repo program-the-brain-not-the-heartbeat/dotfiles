@@ -1,0 +1,98 @@
+## Catppuccin Mocha theme + syntax for nano
+## Approximation with nano's basic/bright colors.
+
+## Palette reference (for your brain, not nano):
+##  Rosewater: #f5e0dc
+##  Flamingo:  #f2cdcd
+##  Pink:      #f5c2e7
+##  Mauve:     #cba6f7
+##  Red:       #f38ba8
+##  Maroon:    #eba0ac
+##  Peach:     #fab387
+##  Yellow:    #f9e2af
+##  Green:     #a6e3a1
+##  Teal:      #94e2d5
+##  Sky:       #89dceb
+##  Sapphire:  #74c7ec
+##  Blue:      #89b4fa
+##  Lavender:  #b4befe
+##  Text:      #cdd6f4
+##  Subtext:   #a6adc8
+##  Surface:   #1e1e2e
+
+## ====== Generic patterns (used by our syntaxes) ======
+## Comments: subtext
+color brightblack    "^\s*#.*$"
+color brightblack    "//.*$"
+color brightblack    "/\*.*\*/"
+
+## Strings: green
+color green          "\"([^\"\\]|\\.)*\""
+color green          "'([^'\\]|\\.)*'"
+
+## Numbers: peach/yellow-ish
+color yellow         "\<[0-9]+\>"
+color yellow         "\<[0-9]+\.[0-9]+\>"
+
+## Booleans / null-like
+color cyan           "\<(true|false|null|on|off|yes|no)\>"
+
+## ====== Bash / Shell ======
+syntax "bash-catppuccin" "\.sh$" "(^|/)(bashrc|bash_aliases|profile)$"
+
+## Shebang
+color brightblack    "^\s*#!.*$"
+
+## Keywords
+color magenta        "\<(if|then|else|elif|fi|for|in|do|done|while|until|case|esac|select)\>"
+color magenta        "\<(function|return|break|continue|shift|export|local)\>"
+
+## Commands (rough guess: start-of-line words)
+color blue           "^[[:space:]]*[[:alpha:]_./-]+"
+
+## Variables
+color cyan           "\$[A-Za-z_][A-Za-z0-9_]*"
+color cyan           "\$\{[^}]+\}"
+
+## Comments (override generic)
+color brightblack    "#.*$"
+
+## ====== YAML ======
+syntax "yaml-catppuccin" "\.ya?ml$"
+
+## Keys
+color magenta        "^\s*[^:#]+:(\s|$)"
+
+## Comments
+color brightblack    "#.*$"
+
+## Anchors & aliases
+color cyan           "[&*][A-Za-z0-9_]+"
+
+## ====== JSON ======
+syntax "json-catppuccin" "\.json$"
+
+## Keys
+color magenta        "\"([^\"\\]|\\.)*\"(?=\s*:)"
+## Values (strings already handled by generic string rules)
+
+## Braces / brackets / punctuation
+color blue           "[\{\}\[\],:]"
+
+## ====== Nginx ======
+syntax "nginx-catppuccin" "(\.nginx$|\.conf$|nginx\.conf$)"
+
+## Directives (simple heuristic)
+color magenta        "^\s*[A-Za-z_][A-Za-z0-9_]*"
+
+## Blocks
+color blue           "[\{\}]"
+
+## Comments
+color brightblack    "#.*$"
+
+## IP addresses
+color cyan           "([0-9]{1,3}\.){3}[0-9]{1,3}"
+
+## Paths
+color green          "/[A-Za-z0-9_./-]+"

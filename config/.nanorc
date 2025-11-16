@@ -1,0 +1,61 @@
+## ~/.nanorc (Catppuccin Mocha, root-safe)
+
+## ========== Behavior ==========
+set autoindent
+set linenumbers
+set tabsize 4
+set tabstospaces
+set softwrap
+set smooth
+set indicator         # right-side scroll indicator
+set stateflags        # show modified / read-only flags
+set morespace         # cleaner UI (hide help bar until needed)
+set mouse
+
+## ========== Search ==========
+set caseinsensitive
+set regexp
+set wordbounds
+
+## ========== Whitespace ==========
+set trailingwhitespace
+set whitespace "·" "⇥"
+
+## ========== Backups / History ==========
+set backup
+set backupsdir "~/.local/share/nano/backups/"
+set historylog
+
+## ========== UI Colors (Catppuccin-ish) ==========
+## Approximations to Catppuccin Mocha using nano's limited palette
+
+## Title bar: text on purple
+set titlecolor brightwhite,magenta
+
+## Status bar: text on dark background
+set statuscolor brightwhite,black
+
+## Prompts and errors
+set promptcolor brightwhite,blue
+set errorcolor brightwhite,red
+
+## Function and key labels
+set functioncolor brightmagenta
+set keycolor brightcyan
+
+## Line numbers & cursor position
+set numbercolor brightmagenta
+set scrollercolor cyan
+
+## Stripe for current line (subtle highlight)
+set stripecolor ,blue
+
+## Selected region
+set selectedcolor white,cyan
+
+## ========== Syntax Highlighting ==========
+## System-wide syntaxes first
+include "/usr/share/nano/*.nanorc"
+
+## Custom Catppuccin Mocha theme overrides
+include "~/.config/nano/catppuccin-mocha.nanorc"
