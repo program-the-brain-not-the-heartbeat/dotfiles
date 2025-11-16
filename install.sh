@@ -50,10 +50,13 @@ mkdir -p "$HOME/.config/wget" "$HOME/.config/curl"
 mkdir -p "$HOME/.config/nano"
 mkdir -p "$HOME/.local/share/nano/backups"
 mkdir -p "$HOME/.ssh/config.d"
+mkdir -p "$HOME/.config/tmux"
+
 
 # Bash
 link_file "$DOTFILES/.bash_aliases" "$HOME/.bash_aliases"
 link_file "$DOTFILES/config/.dircolors" "$HOME/.dircolors"
+
 
 # SSH configuration
 link_file "$DOTFILES/config/ssh/config" "$HOME/.ssh/config"
@@ -64,10 +67,17 @@ link_file "$DOTFILES/config/wgetrc" "$HOME/.config/wget/wgetrc"
 link_file "$DOTFILES/config/curlrc" "$HOME/.config/curl/.curlrc"
 link_file "$DOTFILES/config/.gitconfig" "$HOME/.gitconfig"
 
+# tmux
+link_file "$DOTFILES/config/tmux/tmux.conf" "$HOME/.gitconfig"
+
+if [[ ! -f "$HOME/.tmux.conf" ]]; then
+  printf 'source-file ~/.config/tmux/tmux.conf\n' > "$HOME/.tmux.conf"
+fi
 
 # Nano
 link_file "$DOTFILES/config/nano/nanorc" "$HOME/.nanorc"
 link_file "$DOTFILES/config/nano/catppuccin-mocha.nanorc" "$HOME/.config/nano/catppuccin-mocha.nanorc"
+
 
 if [[ -n "${BASH_VERSION:-}" && -f "$HOME/.bash_aliases" ]]; then
      # shellcheck disable=SC1090
