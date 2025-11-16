@@ -1,0 +1,11 @@
+# Modular includes
+Include ~/.ssh/config.d/*.conf
+
+# Fallbacks or global defaults
+Host *
+    ForwardAgent yes
+    AddKeysToAgent yes
+    ServerAliveInterval 60
+    TCPKeepAlive yes
+    LogLevel INFO
+    Compression yes

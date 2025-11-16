@@ -11,6 +11,15 @@ DOTFILES="${DOTFILES:-$HOME/dotfiles}"
 # - Idempotent: safe to run repeatedly
 ###############################################
 link_file() {
+    if [[ $# -gt 2 ]]; then
+        local target_dir="$1"; shift
+        mkdir -p "$target_dir"
+        for src in "$@"; do
+            link_file "$src" "$target_dir/$(basename "$src")"
+        done
+        return
+    fi
+
     local source="$1"
     local target="$2"
 
@@ -35,13 +44,20 @@ link_file() {
     echo "  ✔ Linked successfully"
 }
 
+
+
 mkdir -p "$HOME/.config/wget" "$HOME/.config/curl"
 mkdir -p "$HOME/.config/nano"
 mkdir -p "$HOME/.local/share/nano/backups"
+mkdir -p "$HOME/.ssh/config.d"
 
 # Bash
 link_file "$DOTFILES/.bash_aliases" "$HOME/.bash_aliases"
 link_file "$DOTFILES/config/.dircolors" "$HOME/.dircolors"
+
+# SSH configuration
+link_file "$DOTFILES/config/ssh/config" "$HOME/.ssh/config"
+link_file "$HOME/.ssh/conf.d" "$DOTFILES/config/.ssh/conf.d/"*
 
 # Application configuration files
 link_file "$DOTFILES/config/wgetrc" "$HOME/.config/wget/wgetrc"
