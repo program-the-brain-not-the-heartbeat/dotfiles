@@ -52,3 +52,8 @@ link_file "$DOTFILES/config/.gitconfig" "$HOME/.gitconfig"
 # Nano
 link_file "$DOTFILES/config/nano/nanorc" "$HOME/.nanorc"
 link_file "$DOTFILES/config/nano/catppuccin-mocha.nanorc" "$HOME/.config/nano/catppuccin-mocha.nanorc"
+
+if [[ -n "${BASH_VERSION:-}" && -f "$HOME/.bash_aliases" ]]; then
+     # shellcheck disable=SC1090
+    source "$HOME/.bash_aliases"
+fi
