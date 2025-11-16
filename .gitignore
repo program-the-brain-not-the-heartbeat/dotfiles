@@ -1,0 +1,52 @@
+.gitconfig.local
+*.local
+
+
+# Allow dotfiles
+!.bashrc
+!.bash_aliases
+!.bash_logout
+!.inputrc
+!.profile
+!.config/
+!scripts/
+!bin/
+!sbin/
+
+# Custom scripts
+!/usr/local/sbin/*
+!/sbin/*
+
+# VSCode server cache (large + per-machine)
+.vscode-server/
+.vscode/
+.vscode-test/
+
+# NVM / node / npm / yarn caches
+node_modules/
+.npm/
+.yarn/
+
+# Editors
+*~
+*.swp
+*.swo
+
+# Shell history
+.bash_history
+.zsh_history
+.history
+
+# App histories
+.mysql_history
+.psql_history
+.python_history
+.viminfo
+.lesshst
+
+# Runtime/cache dirs
+.cache/
+local/
+.local/
+tmp/
+temp/

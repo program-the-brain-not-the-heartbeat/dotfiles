@@ -1,0 +1,13 @@
+[init]
+defaultBranch = main
+
+[core]
+safecrlf = false
+autocrlf = input
+fileMode = false
+
+[credential]
+helper = store
+
+[include]
+path = ~/.gitconfig.local

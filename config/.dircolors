@@ -1,0 +1,414 @@
+# Catppuccin Mocha-ish dircolors (256-color friendly)
+# Designed for dark terminals using the Catppuccin Mocha palette.
+
+COLOR yes
+
+# Common TERM values that support color
+TERM xterm
+TERM xterm-color
+TERM xterm-256color
+TERM screen-256color
+TERM tmux-256color
+TERM rxvt-unicode-256color
+TERM linux
+
+# Basic file classes
+RESET 0
+NORMAL 00                 # regular text
+FILE 00                   # regular file
+DIR 01;36                 # directories (bold cyan → Mocha teal-ish)
+LINK 01;95                # symbolic links (bold bright magenta → Mocha pink/mauve)
+MULTIHARDLINK 00          # multiple hard links
+FIFO 33                   # named pipe (yellow)
+SOCK 01;35                # socket (bold magenta)
+DOOR 01;35                # door (on some systems)
+BLK 01;33                 # block device
+CHR 01;33                 # char device
+ORPHAN 01;31              # symlink to nowhere (bold red)
+MISSING 01;31             # missing file
+EXEC 01;32                # executable file (bold green → Mocha green)
+
+# Special permission bits
+SETUID 37;41              # setuid (white on red)
+SETGID 30;43              # setgid (black on yellow)
+STICKY 37;44              # sticky bit (white on blue)
+OTHER_WRITABLE 97;48;5;203
+STICKY_OTHER_WRITABLE 97;48;5;203
+
+##############################
+# EXTENSION-BASED COLORS
+##############################
+
+# Archives / compressed
+*.tar 01;34
+*.tgz 01;34
+*.arc 01;34
+*.arj 01;34
+*.taz 01;34
+*.lha 01;34
+*.lz4 01;34
+*.lzh 01;34
+*.lzma 01;34
+*.tlz 01;34
+*.txz 01;34
+*.zip 01;34
+*.z 01;34
+*.Z 01;34
+*.dz 01;34
+*.gz 01;34
+*.lrz 01;34
+*.lz 01;34
+*.lzo 01;34
+*.xz 01;34
+*.bz2 01;34
+*.bz 01;34
+*.tbz 01;34
+*.tbz2 01;34
+*.tz 01;34
+*.deb 01;34
+*.rpm 01;34
+*.jar 01;34
+*.war 01;34
+*.ear 01;34
+*.7z 01;34
+*.iso 01;34
+*.img 01;34
+*.dmg 01;34
+
+# Images (rosewater-ish)
+*.jpg 38;5;224
+*.jpeg 38;5;224
+*.jpe 38;5;224
+*.png 38;5;224
+*.gif 38;5;224
+*.bmp 38;5;224
+*.tif 38;5;224
+*.tiff 38;5;224
+*.svg 38;5;224
+*.svgz 38;5;224
+*.webp 38;5;224
+*.avif 38;5;224
+*.ico 38;5;224
+*.psd 38;5;224
+
+# Audio (teal-ish)
+*.aac 38;5;116
+*.aif 38;5;116
+*.aiff 38;5;116
+*.flac 38;5;116
+*.m4a 38;5;116
+*.mid 38;5;116
+*.midi 38;5;116
+*.mp3 38;5;116
+*.ogg 38;5;116
+*.opus 38;5;116
+*.wav 38;5;116
+*.wma 38;5;116
+
+# Video (blue-ish)
+*.avi 38;5;110
+*.m2v 38;5;110
+*.m4v 38;5;110
+*.mkv 38;5;110
+*.mov 38;5;110
+*.mp4 38;5;110
+*.mpeg 38;5;110
+*.mpg 38;5;110
+*.ogm 38;5;110
+*.ogv 38;5;110
+*.webm 38;5;110
+*.wmv 38;5;110
+*.m3u8 38;5;110
+*.m3u 38;5;110
+
+# Documents (mauve / blue)
+*.pdf 38;5;176
+*.ps 38;5;176
+*.eps 38;5;176
+*.djvu 38;5;176
+*.doc 38;5;75
+*.docx 38;5;75
+*.odt 38;5;75
+*.rtf 38;5;75
+*.xls 38;5;184
+*.xlsx 38;5;184
+*.ods 38;5;184
+*.ppt 38;5;173
+*.pptx 38;5;173
+*.odp 38;5;173
+
+# Text / markup
+*.txt 00
+*.md 38;5;146
+*.rst 38;5;146
+*.log 38;5;179
+*.org 38;5;150
+*.nfo 38;5;150
+*.ini 38;5;150
+*.cfg 38;5;150
+*.conf 38;5;150
+*.toml 38;5;150
+*.yml 38;5;150
+*.yaml 38;5;150
+*.json 38;5;150
+*.csv 38;5;184
+*.tsv 38;5;184
+*.po 38;5;150
+*.pot 38;5;150
+
+# Code – general
+*.c 38;5;141
+*.h 38;5;146
+*.cpp 38;5;141
+*.hpp 38;5;146
+*.cc 38;5;141
+*.cxx 38;5;141
+*.hh 38;5;146
+
+*.rs 38;5;180
+*.go 38;5;80
+*.java 38;5;68
+*.kt 38;5;141
+*.kts 38;5;141
+
+*.py 38;5;114
+*.pyc 38;5;240
+*.pyo 38;5;240
+*.pyw 38;5;114
+
+*.rb 38;5;203
+*.php 38;5;177
+*.phar 38;5;177
+*.js 38;5;179
+*.mjs 38;5;179
+*.ts 38;5;179
+*.tsx 38;5;179
+*.jsx 38;5;179
+
+*.sh 38;5;114
+*.bash 38;5;114
+*.zsh 38;5;114
+*.fish 38;5;114
+
+*.pl 38;5;220
+*.pm 38;5;220
+*.lua 38;5;222
+
+*.cs 38;5;75
+*.fs 38;5;75
+*.fsx 38;5;75
+
+*.sql 38;5;109
+
+# Web
+*.html 38;5;217
+*.htm 38;5;217
+*.shtml 38;5;217
+*.xhtml 38;5;217
+*.xml 38;5;150
+*.xsd 38;5;150
+*.xsl 38;5;150
+*.xslt 38;5;150
+
+*.css 38;5;81
+*.less 38;5;81
+*.scss 38;5;81
+*.sass 38;5;81
+
+*.vue 38;5;149
+*.svelte 38;5;149
+*.astro 38;5;149
+
+*.handlebars 38;5;179
+*.hbs 38;5;179
+*.ejs 38;5;179
+*.twig 38;5;179
+
+# Torrents / partial downloads
+*.torrent    38;5;33       # bright-ish blue
+*.part       38;5;240      # dim grey
+*incomplete* 38;5;240
+*!qb        38;5;240       # qBittorrent temp suffix, if you use it
+
+# More secrets / key-ish files
+*.gpg        01;38;5;196
+*.asc        01;38;5;196
+*.kdbx       01;38;5;196   # KeePass DBs, just in case
+*.p12        01;38;5;196   # already in file, but this keeps it grouped
+
+# Shell / env / infra
+*.env 38;5;150
+*.service 38;5;150
+*.socket 38;5;150
+*.timer 38;5;150
+*.target 38;5;150
+*.mount 38;5;150
+*.path 38;5;150
+*.wants 38;5;150
+
+# Containers / VM
+*.dockerfile 38;5;37
+*Dockerfile 38;5;37
+*.yml 38;5;150
+*.yaml 38;5;150
+*docker-compose.yml 38;5;37
+*docker-compose.yaml 38;5;37
+*Vagrantfile 38;5;37
+
+# Archives / package metadata
+*.lock 38;5;240
+*package.json 38;5;179
+*package-lock.json 38;5;240
+*pnpm-lock.yaml 38;5;240
+*yarn.lock 38;5;240
+*composer.json 38;5;177
+*composer.lock 38;5;240
+*go.mod 38;5;80
+*go.sum 38;5;240
+*Gemfile 38;5;203
+*Gemfile.lock 38;5;240
+*Pipfile 38;5;114
+*Pipfile.lock 38;5;240
+*pyproject.toml 38;5;114
+*requirements.txt 38;5;114
+
+# Minified assets / build output
+*.min.js     38;5;240
+*.min.css    38;5;240
+*.map        38;5;240      # source maps
+*.bundle.js  38;5;240
+#dist         38;5;244
+#build        38;5;244
+#node_modules 38;5;244
+
+# VCS
+*.patch 38;5;180
+*.diff 38;5;180
+*.gitignore 38;5;244
+*.gitattributes 38;5;244
+*.gitmodules 38;5;244
+
+# VCS directories/files
+*.git        38;5;244
+*.svn        38;5;244
+*.hg         38;5;244
+*.bzr        38;5;244
+
+# Compressed logs / backups
+*.bak 38;5;240
+*.old 38;5;240
+*.orig 38;5;240
+*.swp 38;5;240
+*.swo 38;5;240
+*.tmp 38;5;240
+
+# Databases
+*.db 38;5;94
+*.sqlite 38;5;94
+*.sqlite3 38;5;94
+*.mdb 38;5;94
+*.accdb 38;5;94
+*.dump 38;5;109
+
+# Fonts
+*.ttf 38;5;104
+*.otf 38;5;104
+*.woff 38;5;104
+*.woff2 38;5;104
+
+# Misc dev stuff
+*Makefile 38;5;178
+*GNUmakefile 38;5;178
+*CMakeLists.txt 38;5;178
+*.cmake 38;5;178
+
+# Node / front-end configs
+*webpack.config.js 38;5;179
+*rollup.config.js 38;5;179
+*vite.config.* 38;5;179
+*eslint.* 38;5;240
+*.prettierrc* 38;5;240
+*.editorconfig 38;5;240
+*.browserslistrc 38;5;240
+
+# PHP / Blade emphasis
+*.php 01;38;5;177
+*.phtml 01;38;5;177
+*.blade.php 01;38;5;219
+
+# WordPress theme/plugin files
+*functions.php 01;38;5;177
+*style.css 01;38;5;81
+*index.php 01;38;5;177
+*single.php 01;38;5;177
+*page.php 01;38;5;177
+*archive.php 01;38;5;177
+*sidebar.php 01;38;5;177
+*header.php 01;38;5;177
+*footer.php 01;38;5;177
+
+# NGINX configs
+*.nginx 38;5;81
+*.vhost 38;5;81
+*nginx.conf 01;38;5;81
+*.conf 38;5;110
+*.htaccess 01;38;5;196
+
+# Systemd units (visible on servers)
+*.service 01;38;5;75
+*.socket 01;38;5;75
+*.timer 01;38;5;75
+*.target 01;38;5;75
+*.mount 01;38;5;75
+*.path 01;38;5;75
+
+# Logs (warn/error)
+*.log 38;5;208
+*error.log 01;38;5;196
+*err.log 01;38;5;196
+*access.log 38;5;178
+
+# Secrets / keys / certs = RED
+*.env 01;38;5;196
+*.env.local 01;38;5;196
+*.env.production 01;38;5;196
+*.pem 01;38;5;196
+*.key 01;38;5;196
+*.crt 01;38;5;196
+*.pfx 01;38;5;196
+*.p12 01;38;5;196
+*id_rsa 01;38;5;196
+*id_ed25519 01;38;5;196
+*known_hosts 01;38;5;196
+
+# Docker & infra
+*Dockerfile 01;38;5;37
+*docker-compose.yml 38;5;37
+*docker-compose.yaml 38;5;37
+*.tf 38;5;172
+*.tfvars 38;5;172
+
+# Ansible
+*hosts 38;5;150
+*inventory 38;5;150
+*group_vars 38;5;150
+*host_vars 38;5;150
+*.j2 38;5;150
+
+# CI/CD
+*.workflow.yml 38;5;110
+*.workflow.yaml 38;5;110
+*.gitlab-ci.yml 38;5;110
+*.gitlab-ci.yaml 38;5;110
+
+# Important repo files
+*CHANGELOG* 38;5;180
+*README* 01;38;5;146
+*LICENSE* 38;5;244
+
+# Danger-ish leftovers
+*.disabled 38;5;240
+*.off 38;5;240
+
+# Production flags
+*prod* 01;38;5;203
