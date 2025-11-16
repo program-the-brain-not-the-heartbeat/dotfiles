@@ -379,6 +379,7 @@ STICKY_OTHER_WRITABLE 97;48;5;203
 *.p12 01;38;5;196
 *id_rsa 01;38;5;196
 *id_ed25519 01;38;5;196
+*id_ed25519_sk 01;38;5;196
 *known_hosts 01;38;5;196
 
 # Docker & infra
