@@ -51,7 +51,7 @@ mkdir -p "$HOME/.config/nano"
 mkdir -p "$HOME/.local/share/nano/backups"
 mkdir -p "$HOME/.ssh/config.d"
 mkdir -p "$HOME/.config/tmux"
-
+mkdir -p "$HOME/.config/htop"
 
 # Bash
 link_file "$DOTFILES/.bash_aliases" "$HOME/.bash_aliases"
@@ -60,12 +60,13 @@ link_file "$DOTFILES/config/.dircolors" "$HOME/.dircolors"
 
 # SSH configuration
 link_file "$DOTFILES/config/ssh/config" "$HOME/.ssh/config"
-link_file "$HOME/.ssh/conf.d" "$DOTFILES/config/.ssh/conf.d/"*
+#link_file "$HOME/.ssh/conf.d" "$DOTFILES/config/.ssh/conf.d/"*
 
 # Application configuration files
 link_file "$DOTFILES/config/wgetrc" "$HOME/.config/wget/wgetrc"
 link_file "$DOTFILES/config/curlrc" "$HOME/.config/curl/.curlrc"
 link_file "$DOTFILES/config/.gitconfig" "$HOME/.gitconfig"
+link_file "$DOTFILES/config/htop/htoprc" "$HOME/.config/htop/htoprc"
 
 # tmux
 link_file "$DOTFILES/config/tmux/tmux.conf" "$HOME/.config/tmux/tmux.conf"
