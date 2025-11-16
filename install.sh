@@ -68,7 +68,7 @@ link_file "$DOTFILES/config/curlrc" "$HOME/.config/curl/.curlrc"
 link_file "$DOTFILES/config/.gitconfig" "$HOME/.gitconfig"
 
 # tmux
-link_file "$DOTFILES/config/tmux/tmux.conf" "$HOME/.gitconfig"
+link_file "$DOTFILES/config/tmux/tmux.conf" "$HOME/.config/tmux/tmux.conf"
 
 if [[ ! -f "$HOME/.tmux.conf" ]]; then
   printf 'source-file ~/.config/tmux/tmux.conf\n' > "$HOME/.tmux.conf"
