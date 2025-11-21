@@ -24,6 +24,36 @@ alias 755d='find . -type d -print0 | xargs -0 chmod 0755'
 alias 775='chmod 775 -c -R'
 alias 777='chmod 777 -c -R'
 alias img="chafa --size=$(tput cols)x$(tput lines)"
+
+cpe() {
+    if [[ $# -ne 2 || "$1" == "--help" || "$1" == "-h" ]]; then
+cat <<EOF
+Usage: ${FUNCNAME[0]} <source> <destination>
+
+Description:
+  Copy a file to a new destination and immediately open it in your default
+  editor for quick editing. Useful for cloning config files before applying changes.
+
+Arguments:
+  <source>        Path to the file to copy from
+  <destination>   Path where the copied file will be created
+
+Examples:
+  ${FUNCNAME[0]} /etc/nginx/nginx.conf /tmp/nginx.conf
+  ${FUNCNAME[0]} /etc/php/8.0/fpm/php.ini /etc/php/8.3/fpm/php.ini
+
+EOF
+        return [[ $# -ne 2 ]] && echo 1 || echo 0
+    fi
+
+    local src="$1"
+    local dest="$2"
+
+    cp -- "$src" "$dest" || return 1
+    cd "$(dirname -- "$dest")" || return 1
+    "${VISUAL:-${EDITOR:-nano}}" "$(basename -- "$dest")"
+}
+
 wwwdata() {
     shopt -s nullglob
     sudo chown -c -R www-data:www-data -- * .[!.]* .[!.]?*

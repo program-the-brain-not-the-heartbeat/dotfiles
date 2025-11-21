@@ -17,7 +17,7 @@ RESET 0
 NORMAL 00                 # regular text
 FILE 00                   # regular file
 DIR 01;36                 # directories (bold cyan → Mocha teal-ish)
-LINK 01;95                # symbolic links (bold bright magenta → Mocha pink/mauve)
+LINK 01;94                # symbolic links
 MULTIHARDLINK 00          # multiple hard links
 FIFO 33                   # named pipe (yellow)
 SOCK 01;35                # socket (bold magenta)

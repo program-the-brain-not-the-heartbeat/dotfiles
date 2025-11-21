@@ -54,7 +54,7 @@ mkdir -p "$HOME/.config/tmux"
 mkdir -p "$HOME/.config/htop"
 
 # Bash
-link_file "$DOTFILES/.bash_aliases" "$HOME/.bash_aliases"
+link_file "$DOTFILES/bash/.bash_aliases" "$HOME/.bash_aliases"
 link_file "$DOTFILES/config/.dircolors" "$HOME/.dircolors"
 
 
