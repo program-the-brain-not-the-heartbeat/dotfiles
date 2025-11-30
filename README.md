@@ -10,4 +10,5 @@ The bootstrap command will git the repo and install the files into the user acco
 
 ## Todo
 
-XDG folder structure
+- XDG folder structure
+- Work/Personal profile and input on installing
