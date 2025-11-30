@@ -45,6 +45,9 @@ link_file() {
 }
 
 
+sudo apt update
+sudo apt install -y git jq batcat curl wget htop nano tmux
+
 
 mkdir -p "$HOME/.config/wget" "$HOME/.config/curl"
 mkdir -p "$HOME/.config/nano"
