@@ -79,7 +79,7 @@ if [[ ! -f "$HOME/.tmux.conf" ]]; then
 fi
 
 # Nano
-link_file "$DOTFILES/config/nano/nanorc" "$HOME/.nanorc"
+link_file "$DOTFILES/config/nano/.nanorc" "$HOME/.nanorc"
 link_file "$DOTFILES/config/nano/catppuccin-mocha.nanorc" "$HOME/.config/nano/catppuccin-mocha.nanorc"
 
 
