@@ -82,5 +82,6 @@ link_file "$DOTFILES/config/nano/catppuccin-mocha.nanorc" "$HOME/.config/nano/ca
 
 if [[ -n "${BASH_VERSION:-}" && -f "$HOME/.bash_aliases" ]]; then
      # shellcheck disable=SC1090
+    source "$HOME/.bashrc"
     source "$HOME/.bash_aliases"
 fi

@@ -9,7 +9,7 @@ echo ">>> Using target directory: $TARGET_DIR"
 if command -v git >/dev/null 2>&1; then
   echo ">>> git found."
 else
-  echo "ERROR: git is not installed or not in PATH." >&2
+  echo "ERROR: git is not installed or not in PATH. " >&2
   exit 1
 fi
 
