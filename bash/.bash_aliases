@@ -84,8 +84,8 @@ matt() {
     sudo chown -c -R matt:matt -- * .[!.]* .[!.]?*
 }
 alias mirror='wget --r --no-parent --no-clobber -e robots=off -R "index.html*" '
-alias malwarescan='wordfence malware-scan --overwrite --output-format=csv --output-headers=csv --output-path /root/wordfence-home.csv --match-engine=vectorscan /home'
-alias malwarescan2='wordfence malware-scan --overwrite --output-format=csv --output-headers=csv --output-path /root/wordfence-home.csv --match-engine=pcre /home'
+alias malwarescan='wordfence malware-scan --overwrite --output-format=csv --output-headers --output-path /root/wordfence-home.csv --match-engine=vectorscan /home'
+alias malwarescan2='wordfence malware-scan --overwrite --output-format=csv --output-headers --output-path /root/wordfence-home.csv --match-engine=pcre /home'
 og() { curl -s "https://opengraph.io/api/1.1/site/$1" | jq .; }
 unshorten() {
     curl -ILs "$1" | grep -i "^location:"
