@@ -48,6 +48,15 @@ link_file() {
 sudo apt update
 sudo apt install -y git jq bat curl wget htop nano tmux
 
+
+mkdir -p /opt/scripts/
+chown -R matt:matt /opt/scripts/matt
+chmod -R 750 /opt/scripts/matt
+setfacl -m g:admins:rX /opt/scripts/matt
+chmod 750 /opt/scripts
+chmod 755 /opt
+chown root:root /opt
+chown root:admins /opt/scripts
 UMASK_FILE="/etc/profile.d/umask.sh"
 UMASK_VALUE="022"
 
