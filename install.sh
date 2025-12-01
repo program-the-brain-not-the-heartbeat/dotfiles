@@ -48,6 +48,18 @@ link_file() {
 sudo apt update
 sudo apt install -y git jq bat curl wget htop nano tmux
 
+UMASK_FILE="/etc/profile.d/umask.sh"
+UMASK_VALUE="022"
+
+echo "Setting global default umask to ${UMASK_VALUE}..."
+cat <<EOF | sudo tee "${UMASK_FILE}" >/dev/null
+umask ${UMASK_VALUE}
+EOF
+
+sudo chmod 644 "${UMASK_FILE}"
+
+echo "✅ ${UMASK_FILE} installed"
+
 
 mkdir -p "$HOME/.config/wget" "$HOME/.config/curl"
 mkdir -p "$HOME/.config/nano"
