@@ -5,6 +5,8 @@
 # If not running interactively, don't do anything
 [ -z "$PS1" ] && return
 
+umask 022
+
 # don't put duplicate lines in the history. See bash(1) for more options
 # ... or force ignoredups and ignorespace
 HISTCONTROL=ignoredups:ignorespace
@@ -118,6 +120,15 @@ fi
 #    . /etc/bash_completion
 #fi
 
+LOCAL_BIN="$HOME/.local/bin"
+
+[ -d "$LOCAL_BIN" ] || mkdir -p "$LOCAL_BIN" && chmod 700 "$LOCAL_BIN"
+
+case ":$PATH:" in
+  *":$LOCAL_BIN:"*) ;;
+  *) export PATH="$PATH:$LOCAL_BIN" ;;
+esac
+
 export PATH=~/.composer/vendor/bin:$PATH
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
@@ -127,3 +138,10 @@ export NVM_DIR="$HOME/.nvm"
 # This section is managed by b2 . Manual edit may break automated updates.
 source /root/.bash_completion.d/b2 || true
 # <<< b2 autocomplete <<<
+
+export LC_BYOBU=0
+export LANG=C.UTF-8
+export LC_ALL=C.UTF-8
+export WP_CLI_CONFIG_PATH=/etc/wp-cli/wp-cli.yml
+export WP_CLI_PACKAGES_DIR=/etc/wp-cli/packages/
+export WP_CLI_CACHE_DIR=/etc/wp-cli/cache/
