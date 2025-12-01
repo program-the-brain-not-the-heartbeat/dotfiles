@@ -120,6 +120,8 @@ fi
 #    . /etc/bash_completion
 #fi
 
+[ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
+
 LOCAL_BIN="$HOME/.local/bin"
 
 [ -d "$LOCAL_BIN" ] || mkdir -p "$LOCAL_BIN" && chmod 700 "$LOCAL_BIN"
