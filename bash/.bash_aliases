@@ -3,6 +3,7 @@ b() {
     #        b crontab -l
     "$@" | bat
 }
+alias mysql='mariadb'
 alias mount-missing='sudo awk '"'"'
   # Skip comments and empty lines
   $1 !~ /^#/ && NF >= 2 {
@@ -18,6 +19,7 @@ alias mount-missing='sudo awk '"'"'
     }
   }
 '"'"' /etc/fstab'
+#alias l="find . -mindepth 1 -maxdepth 1 \( -type f -o -type d \) -printf '%f\n' | sort | xargs -d '\n' -I{} ls --color=auto -d {}"
 alias lf='ls -1f'
 alias lsblk='lsblk -o NAME,MODEL,SIZE,FSTYPE,MOUNTPOINT'
 alias lsblk+u='lsblk -o NAME,MODEL,SIZE,FSTYPE,LABEL,UUID,TYPE,MOUNTPOINT'
@@ -44,6 +46,8 @@ alias 755d='find . -type d -print0 | xargs -0 chmod 0755'
 alias 775='chmod 775 -c -R'
 alias 777='chmod 777 -c -R'
 alias img="chafa --size=$(tput cols)x$(tput lines)"
+
+alias flush-dns='sudo systemd-resolve --flush-cache && sudo systemd-resolve --statistics'
 
 cpe() {
     if [[ $# -ne 2 || "$1" == "--help" || "$1" == "-h" ]]; then
@@ -404,10 +408,25 @@ alias perms='stat -c "%A %a %n"'
 alias rand='openssl rand -hex 16'
 alias digg='dig +short'
 alias big='du -ah . 2>/dev/null | sort -h | tail -n 20'
+#alias big='du -ah . | sort -rh | head -20'
 alias bigfiles='find . -type f -exec du -h {} + 2>/dev/null | sort -h | tail -n 20'
+#alias big-files='ls -1Rhs | sed -e "s/^ *//" | grep "^[0-9]" | sort -hr | head -n20'
 alias now='date +"%Y-%m-%d %H:%M:%S"'
 alias week='date +%V'
-alias update="sudo apt-get -qq update && sudo apt-get upgrade"
+#alias update="sudo apt-get -qq update && sudo apt-get upgrade"
+function update() {
+    sudo apt update && sudo apt upgrade -y
+    if [ $? -eq 0 ]; then
+        echo "System update and upgrade completed successfully."
+    else
+        echo "There was an error during the update or upgrade process." >&2
+        return 1
+    fi
+
+    if [ -f /var/run/reboot-required ]; then
+        echo "A system reboot is required."
+    fi
+}
 alias install="sudo apt-get install"
 alias remove="sudo apt-get remove"
 alias search="apt-cache search"
@@ -434,6 +453,9 @@ countryinfo() {
 alias wget-site='wget --mirror -p --convert-links -P'
 
 function sr {
+    wp cache flush || true
+    wp transient delete --all
+
     if [[ ! -z $1 && ! -z $2 ]]; then
         wp search-replace $1 $2 --recurse-objects --all-tables --precise --allow-root
     fi
@@ -444,6 +466,9 @@ function sr {
 }
 
 function sre {
+    wp cache flush || true
+    wp transient delete --all
+
     if wp plugin is-installed elementor --quiet --allow-root && wp plugin is-active elementor --quiet --allow-root; then
         wp elementor flush_css --allow-root
     fi
@@ -871,3 +896,183 @@ umount-drive() {
     echo "    umount-drive \"$ARG\" --lazy"
     return 1
 }
+
+
+
+function theme {
+  if [[ -z $1 ]]; then
+     cd /home
+  else
+     if [[ -d /var/www/$1/public/wp-content ]]; then
+         THEME_DIR=$(ls -d /home/$1/public/wp-content/themes/!(twenty*)|head -n 1) 2>/dev/null
+    #     echo $THEME_DIR
+         if [[ -d $THEME_DIR ]]; then
+            cd $THEME_DIR
+	    if [[ -f "$THEME_DIR/gulpfile.js" ]]; then
+                gulp
+            fi
+         else
+            cd /home/$1/public/wp-content/themes/
+         fi
+     else
+         cd /home/$1
+     fi
+  fi
+}
+
+
+alias memusage='sudo ps -e -orss=,args= | sort -b -k1,1n'
+
+
+alias check-wordpress-admin-email='wp @all eval-file - < /usr/local/libexec/wordpress-check-admin-email.php 2>/dev/null'
+alias check-wordpress-forms-email='wp @all eval-file - < /usr/local/libexec/wordpress-check-forms.php 2>/dev/null'
+alias check-wordpress-template='wp @all eval-file - < /usr/local/libexec/wordpress-check-template-string.php 2>/dev/null'
+alias check-wordpress-plugin='wp @all eval-file - < /usr/local/libexec/wordpress-check-plugin.php $1 2>/dev/null'
+alias disable-wordpress-debugging='bash -c '\''for const in WP_DEBUG WP_DEBUG_DISPLAY WP_DEBUG_LOG SAVEQUERIES SCRIPT_DEBUG; do wp @all config delete "$const" --type=constant || true; wp @all config set "$const" false --raw --type=constant; done'\'
+
+alias chmod='function _chmod() { if [[ "$1" == "777" ]]; then echo "chmod 777 is disabled."; else /bin/chmod "$@"; fi; }; _chmod'
+
+alias toggle-site='toggle-nginx-site'
+
+lighthouse_clean() {
+  local domain="$1"
+  local report_file="${2:-report.html}"
+  local hosts_file="/etc/hosts"
+  local temp_file="/tmp/hosts.modified.$(date +%s)"
+
+  export CHROME_PATH="/usr/bin/google-chrome"
+
+  if [[ -z "$domain" ]]; then
+    echo "Usage: lighthouse_clean <domain> [output_file.html]"
+    return 1
+  fi
+
+  echo "[>] Temporarily disabling $domain and www.$domain in $hosts_file"
+  sudo sed "/[[:space:]]$domain$/s/^/#TEMP#/" "$hosts_file" | \
+  sudo sed "/[[:space:]]www\.$domain$/s/^/#TEMP#/" | \
+  sudo tee "$temp_file" > /dev/null
+
+  sudo cp "$temp_file" "$hosts_file"
+  rm -f "$temp_file"
+
+  echo "[>] Running Lighthouse audit on https://$domain"
+  lighthouse "https://$domain" \
+    --output html \
+    --output-path "$report_file" \
+    --chrome-flags="--no-sandbox --headless --disable-gpu --disable-dev-shm-usage  --ignore-certificate-errors"
+
+  echo "[>] Re-enabling $domain and www.$domain in $hosts_file"
+  sudo sed -i "/^#TEMP#/s/^#TEMP#//" "$hosts_file"
+
+  echo "[✓] Done. Report saved to: $report_file"
+}
+
+decrypt_backup() {
+  local input_file=""
+  local output_file=""
+  local uncompress=""
+
+  # Parse args
+  for arg in "$@"; do
+    case "$arg" in
+      --uncompress=*)
+        uncompress="${arg#*=}"
+        ;;
+      *)
+        input_file="$arg"
+        ;;
+    esac
+  done
+
+  output_file="${input_file%.enc}"
+
+  if [[ -z "$input_file" ]]; then
+    echo "Usage: decrypt_backup <encrypted_file> [--uncompress=yes|no]"
+    return 1
+  fi
+
+  if [[ ! -f "$input_file" ]]; then
+    echo "❌ File not found: $input_file"
+    return 1
+  fi
+
+  echo "🔐 Decrypting: $input_file"
+  echo "➡️  Output will be: $output_file"
+
+  openssl enc -d -aes-256-cbc -md sha512 -pbkdf2 -iter "${BACKUP_ROUNDS}" -salt \
+    -in "$input_file" -out "$output_file" -pass file:"${BACKUP_ENCRYPTION_FILE}"
+
+  if [[ $? -ne 0 ]]; then
+    echo "❌ Decryption failed."
+    return 1
+  fi
+
+  echo "✅ Decryption complete."
+
+  # Detect file type by extension
+  case "$output_file" in
+    *.tar.gz|*.tgz|*.zip|*.tar|*.gz|*.rar)
+      local do_extract="prompt"
+      if [[ "$uncompress" == "yes" ]]; then
+        do_extract="yes"
+      elif [[ "$uncompress" == "no" ]]; then
+        do_extract="no"
+      fi
+
+      if [[ "$do_extract" == "prompt" ]]; then
+        echo -n "📦 Detected archive file. Extract it? (yes/no): "
+        read answer
+        [[ "$answer" == "yes" || "$answer" == "y" ]] && do_extract="yes" || do_extract="no"
+      fi
+
+      if [[ "$do_extract" == "yes" ]]; then
+        # Extract label (removes date and extension)
+        local base_name
+        base_name=$(basename "$output_file")       # strip path
+        base_name="${base_name%%.*}"               # remove extension at first dot
+        base_name="${base_name#*-*-*-}"            # remove leading date if format is YYYY-MM-DD-
+
+        local extract_dir="./$base_name"
+        mkdir -p "$extract_dir"
+
+        echo "📂 Extracting to: $extract_dir"
+
+        case "$output_file" in
+          *.tar.gz|*.tgz)
+            tar -xvzf "$output_file" -C "$extract_dir"
+            ;;
+          *.tar)
+            tar -xvf "$output_file" -C "$extract_dir"
+            ;;
+          *.zip)
+            unzip -d "$extract_dir" "$output_file"
+            ;;
+          *.gz)
+            cp "$output_file" "$extract_dir"
+            gunzip "$extract_dir/$(basename "$output_file")"
+            ;;
+          *.rar)
+            if command -v unrar >/dev/null 2>&1; then
+              unrar x "$output_file" "$extract_dir/"
+            else
+              echo "❌ 'unrar' is not installed. Please install it to extract RAR files."
+              return 1
+            fi
+            ;;
+          *)
+            echo "❌ Unknown archive format."
+            return 1
+            ;;
+        esac
+
+        echo "✅ Extraction complete in: $extract_dir"
+      else
+        echo "ℹ️  Skipping extraction."
+      fi
+      ;;
+    *)
+      echo "ℹ️  Output is not a compressed archive. No extraction needed."
+      ;;
+  esac
+}
+alias fixacls='find . -type d -exec setfacl -m u:www-data:rx {} \;'
