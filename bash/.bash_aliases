@@ -900,6 +900,7 @@ umount-drive() {
 
 
 function theme {
+  # TODO: Make this use /var/www or /home based on setup
   if [[ -z $1 ]]; then
      cd /home
   else
@@ -908,7 +909,8 @@ function theme {
     #     echo $THEME_DIR
          if [[ -d $THEME_DIR ]]; then
             cd $THEME_DIR
-	    if [[ -f "$THEME_DIR/gulpfile.js" ]]; then
+            npx browserslist@latest --update-db
+            if [[ -f "$THEME_DIR/gulpfile.js" ]]; then
                 gulp
             fi
          else
