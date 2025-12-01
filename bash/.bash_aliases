@@ -421,7 +421,6 @@ alias weather='curl -s -A curl wttr.in | sed "$ d"'
 alias w='curl -s wttr.in/?format=3'
 alias ye='curl -s https://api.kanye.rest | jq -r .quote'
 alias dadjoke='curl -s https://icanhazdadjoke.com/'
-alias quote='curl -s https://api.quotable.io/random | jq -r ".content"'
 alias fact='curl -s https://uselessfacts.jsph.pl/random.json?language=en | jq -r .text'
 define() {
     curl -s "https://api.dictionaryapi.dev/api/v2/entries/en/$1" | jq .
