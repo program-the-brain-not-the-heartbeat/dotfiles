@@ -133,6 +133,16 @@ case ":$PATH:" in
   *) export PATH="$PATH:$LOCAL_BIN" ;;
 esac
 
+export COMPOSER_HOME="$HOME/.config/composer"
+
+# Global Composer bin directory
+if [ -d "$COMPOSER_HOME/vendor/bin" ]; then
+  case ":$PATH:" in
+    *":$COMPOSER_HOME/vendor/bin:"*) ;;
+    *) PATH="$PATH:$COMPOSER_HOME/vendor/bin" ;;
+  esac
+fi
+
 export PATH=~/.composer/vendor/bin:$PATH
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
