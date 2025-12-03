@@ -1,4 +1,5 @@
 .gitconfig.local
+.bashrc.local
 *.local
 
 
