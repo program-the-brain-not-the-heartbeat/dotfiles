@@ -3,6 +3,11 @@ set -euo pipefail
 
 DOTFILES="${DOTFILES:-$HOME/dotfiles}"
 
+# Load base snippets
+for f in "${DOTFILES}/common/bashrc.d/"*.bash; do
+    [ -r "$f" ] && . "$f"
+done
+
 ###############################################
 # link_file SOURCE TARGET
 # Safely create/update a symlink.
@@ -48,6 +53,11 @@ link_file() {
 sudo apt update
 sudo apt install -y git jq bat curl wget htop nano tmux
 sudo groupadd admins
+sudo groupadd developers
+
+
+
+
 
 mkdir -p /opt/scripts/
 chown -R matt:matt /opt/scripts/matt
@@ -79,6 +89,7 @@ mkdir -p "$HOME/.config/tmux"
 mkdir -p "$HOME/.config/htop"
 
 # Bash
+link_file "$DOTFILES/roles/base/bashrc.d/.bashrc" "$HOME/.bashrc"
 link_file "$DOTFILES/bash/.bash_aliases" "$HOME/.bash_aliases"
 link_file "$DOTFILES/config/.dircolors" "$HOME/.dircolors"
 
