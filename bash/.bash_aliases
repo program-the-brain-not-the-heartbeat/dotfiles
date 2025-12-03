@@ -932,7 +932,7 @@ alias check-wordpress-template='wp @all eval-file - < /usr/local/libexec/wordpre
 alias check-wordpress-plugin='wp @all eval-file - < /usr/local/libexec/wordpress-check-plugin.php $1 2>/dev/null'
 alias disable-wordpress-debugging='bash -c '\''for const in WP_DEBUG WP_DEBUG_DISPLAY WP_DEBUG_LOG SAVEQUERIES SCRIPT_DEBUG; do wp @all config delete "$const" --type=constant || true; wp @all config set "$const" false --raw --type=constant; done'\'
 
-alias chmod='function _chmod() { if [[ "$1" == "777" ]]; then echo "chmod 777 is disabled."; else /bin/chmod "$@"; fi; }; _chmod'
+
 
 alias toggle-site='toggle-nginx-site'
 
