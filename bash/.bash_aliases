@@ -3,6 +3,33 @@ b() {
     #        b crontab -l
     "$@" | bat
 }
+alias timers='systemctl list-timers --all'
+alias tgrep='systemctl list-timers --all | grep -i'
+alias sgrep='systemctl list-units --type=service --all | grep -i'
+ugrep() {
+    systemctl list-unit-files --all | grep -i "$1"
+}
+
+timer() {
+    systemctl status "$1.timer"
+    systemctl cat "$1.timer"
+}
+svc() {
+    systemctl status "$1.service"
+    systemctl cat "$1.service"
+}
+edit-service() {
+    sudo systemctl edit "$@"
+}
+restart() {
+    sudo systemctl restart "$@"
+}
+alias start='sudo systemctl start'
+alias stop='sudo systemctl stop'
+alias status='systemctl status'
+alias enable='sudo systemctl enable'
+alias disable='sudo systemctl disable'
+alias reload-services='sudo systemctl daemon-reexec'
 alias mysql='mariadb'
 alias mount-missing='sudo awk '"'"'
   # Skip comments and empty lines
