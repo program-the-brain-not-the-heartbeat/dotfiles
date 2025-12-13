@@ -1114,7 +1114,7 @@ decrypt_backup() {
   esac
 }
 alias fixacls='find . -type d -exec setfacl -m u:www-data:rx {} \;'
-alias snapshots="zfs list -t snapshot -r $1"
+alias snapshots="zfs list -t snapshot -r ${1:-tank}"
 rmsnapshots() {
     local POOL="$1"
     local DAYS="${2:-30}"
