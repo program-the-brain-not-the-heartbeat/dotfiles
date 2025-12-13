@@ -5,7 +5,9 @@ if [ -d "$HOME/.bash_completion.d" ]; then
 fi
 
 
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+if [[ -n "$NVM_DIR" ]]; then
+    [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+fi
 
 #restic generate --bash-completion ~/.bash_completion.d/restic
 
