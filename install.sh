@@ -121,3 +121,5 @@ if [[ -n "${BASH_VERSION:-}" && -f "$HOME/.bash_aliases" ]]; then
     source "$HOME/.bashrc"
     source "$HOME/.bash_aliases"
 fi
+
+echo "Done installing."
