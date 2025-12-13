@@ -46,3 +46,10 @@ case "$CONFIRM" in
     echo "    $INSTALL_SCRIPT"
     ;;
 esac
+
+
+echo 1 > /proc/sys/kernel/task_delayacct
+cat <<EOF > /etc/sysctl.d/99-task-delayacct.conf
+kernel.task_delayacct = 1
+EOF
+sysctl --system
