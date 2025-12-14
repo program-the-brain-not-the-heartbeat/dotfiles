@@ -52,14 +52,13 @@ link_file() {
 
 sudo apt update -qq
 sudo apt install -y -qq git jq bat curl wget htop nano tmux
-sudo groupadd admins
-sudo groupadd developers
+sudo groupadd admins || true
+sudo groupadd developers || true
 
 
 
 
 
-mkdir -p /opt/scripts/
 mkdir -p /opt/scripts/matt
 chown -R matt:matt /opt/scripts/matt
 chmod -R 750 /opt/scripts/matt
@@ -77,7 +76,7 @@ cat <<EOF | sudo tee "${UMASK_FILE}" >/dev/null
 umask ${UMASK_VALUE}
 EOF
 
-sudo chmod 644 "${UMASK_FILE}"
+sudo chmod 644 "${UMASK_FILE}" || true
 
 echo "✅ ${UMASK_FILE} installed"
 
