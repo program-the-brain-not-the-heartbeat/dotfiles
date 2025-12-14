@@ -62,7 +62,7 @@ sudo groupadd developers || true
 mkdir -p /opt/scripts/matt
 chown -R matt:matt /opt/scripts/matt
 chmod -R 750 /opt/scripts/matt
-setfacl -m g:admins:rX /opt/scripts/matt
+setfacl -m g:admins:rX /opt/scripts/matt || true
 chmod 750 /opt/scripts
 chmod 755 /opt
 chown root:root /opt
