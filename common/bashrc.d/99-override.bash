@@ -1,1 +1,1 @@
-[ -f "$HOME/.bashrc.local" ] && . "$HOME/.bashrc.local"
+[ -f "$HOME/.bashrc.local" ] && . "$HOME/.bashrc.local" || true
