@@ -51,7 +51,7 @@ link_file() {
 
 
 sudo apt update
-sudo apt install -y git jq yq bat curl wget htop nano tmux
+sudo apt install -y git jq bat curl wget htop nano tmux
 sudo groupadd admins
 sudo groupadd developers
 
