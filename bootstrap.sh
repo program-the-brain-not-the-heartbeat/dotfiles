@@ -39,7 +39,7 @@ elif [ -d "$TARGET_DIR" ]; then
   exit 1
 else
   echo ">>> Cloning $REPO_URL into $TARGET_DIR..."
-  git clone "$REPO_URL" "$TARGET_DIR"
+  git clone "$REPO_URL" "$TARGET_DIR" --quiet
 fi
 
 INSTALL_SCRIPT="$TARGET_DIR/install.sh"
