@@ -1,0 +1,190 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+PROG="$(basename "$0")"
+
+usage() {
+  cat <<EOF
+Usage:
+  $PROG [--quick] [--dod] /dev/<device>
+
+Options:
+  --quick     Single-pass zero wipe (fastest; not reliable for SSD wear-leveling).
+  --dod       DoD-style overwrite (HDD/rotational only). Refuses SSD/NVMe by default.
+  -h, --help  Show help.
+
+Notes:
+  - NVMe: prefers 'nvme format' if nvme-cli is installed.
+  - SSD/SATA flash: prefers 'blkdiscard' if supported.
+  - HDD: default uses 'shred' (if available) or falls back to dd-based methods.
+EOF
+}
+
+die() { echo "Error: $*" >&2; exit 1; }
+warn() { echo "Warning: $*" >&2; }
+
+need_cmd() { command -v "$1" >/dev/null 2>&1; }
+
+# --- parse args ---
+DOD=0
+QUICK=0
+DEV=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --dod) DOD=1; shift ;;
+    --quick) QUICK=1; shift ;;
+    -h|--help) usage; exit 0 ;;
+    --) shift; break ;;
+    -*) die "Unknown option: $1" ;;
+    *) DEV="$1"; shift ;;
+  esac
+done
+
+[[ -n "${DEV:-}" ]] || { usage; exit 2; }
+
+(( DOD && QUICK )) && die "--dod and --quick are mutually exclusive"
+
+# --- sanity checks ---
+[[ -b "$DEV" ]] || die "$DEV is not a block device"
+
+base="$(basename "$DEV")"
+
+# Best-effort partition check using sysfs (portable on Linux)
+if [[ -e "/sys/class/block/$base/partition" ]]; then
+  die "$DEV appears to be a partition; use the whole device (e.g., /dev/sda or /dev/nvme0n1)"
+fi
+
+# Mounted check (optional if lsblk exists)
+if need_cmd lsblk; then
+  if lsblk -nro MOUNTPOINT "$DEV" 2>/dev/null | grep -qE '.+'; then
+    die "$DEV is mounted; unmount it first"
+  fi
+  # Any mounted children?
+  if lsblk -nr "$DEV" -o MOUNTPOINT 2>/dev/null | grep -qE '.+'; then
+    die "One or more child volumes/partitions of $DEV are mounted; unmount all first"
+  fi
+fi
+
+# --- autodetect device class ---
+IS_NVME=0
+[[ "$base" =~ ^nvme ]] && IS_NVME=1
+
+ROTATIONAL="unknown"
+if [[ -r "/sys/class/block/$base/queue/rotational" ]]; then
+  ROTATIONAL="$(cat "/sys/class/block/$base/queue/rotational")"  # 1=HDD, 0=SSD/flash
+fi
+
+echo "Target: $DEV"
+echo "Detected: $([[ $IS_NVME -eq 1 ]] && echo NVMe || echo non-NVMe), rotational=$ROTATIONAL"
+if (( QUICK )); then
+  echo "Mode: QUICK (zero-only)"
+elif (( DOD )); then
+  echo "Mode: DoD-style overwrite (HDD/rotational only)"
+else
+  echo "Mode: DEFAULT secure overwrite"
+fi
+echo
+echo "DANGER: This will PERMANENTLY destroy all data on $DEV."
+read -r -p "Type 'ERASE $DEV' to continue: " CONFIRM
+[[ "$CONFIRM" == "ERASE $DEV" ]] || { echo "Aborted."; exit 1; }
+
+sync || true
+
+# --- wipe primitives ---
+dd_zero() {
+  # Use status=progress if supported; fall back silently if not.
+  dd if=/dev/zero of="$DEV" bs=16M conv=fdatasync status=progress 2>/dev/null \
+    || dd if=/dev/zero of="$DEV" bs=16M conv=fdatasync
+}
+
+dd_urandom() {
+  dd if=/dev/urandom of="$DEV" bs=16M conv=fdatasync status=progress 2>/dev/null \
+    || dd if=/dev/urandom of="$DEV" bs=16M conv=fdatasync
+}
+
+shred_default() {
+  need_cmd shred || die "'shred' not found (coreutils). Install it or use --quick."
+  shred --verbose --random-source=/dev/urandom --iterations=3 --zero "$DEV"
+}
+
+dod_hdd() {
+  # Common “DoD-style” approximation: 0xF6, 0x00, random
+  # Implemented without non-portable dd features beyond basic usage.
+  echo "DoD pass 1/3 (0xF6) ..."
+  tr '\000' '\366' </dev/zero | dd of="$DEV" bs=16M conv=fdatasync status=progress 2>/dev/null \
+    || tr '\000' '\366' </dev/zero | dd of="$DEV" bs=16M conv=fdatasync
+
+  echo "DoD pass 2/3 (0x00) ..."
+  dd_zero
+
+  echo "DoD pass 3/3 (random) ..."
+  dd_urandom
+}
+
+nvme_format() {
+  need_cmd nvme || return 1
+  echo "Using NVMe controller format (nvme format)."
+  # --ses=1 requests “secure erase” if supported; fallback to normal format.
+  nvme format "$DEV" --ses=1 2>/dev/null || nvme format "$DEV"
+}
+
+discard_ssd() {
+  need_cmd blkdiscard || return 1
+  echo "Attempting discard (blkdiscard)."
+  blkdiscard -f "$DEV"
+}
+
+# --- policy: SSD/NVMe handling ---
+# SSD overwrites may be unreliable due to wear-leveling. Prefer controller-assisted methods.
+if (( IS_NVME == 1 )) || [[ "$ROTATIONAL" == "0" ]]; then
+  if (( DOD == 1 )); then
+    die "--dod is intended for rotational HDDs; refusing on SSD/NVMe (overwrite not reliable)"
+  fi
+
+  if (( IS_NVME == 1 )); then
+    if nvme_format; then
+      sync || true
+      echo "Completed: $DEV"
+      exit 0
+    fi
+    warn "NVMe detected but 'nvme' (nvme-cli) not available; proceeding with best-effort fallback."
+  else
+    if discard_ssd; then
+      sync || true
+      echo "Completed: $DEV"
+      exit 0
+    fi
+    warn "SSD/flash detected; blkdiscard unsupported or unavailable; proceeding with best-effort overwrite."
+  fi
+
+  if (( QUICK == 1 )); then
+    warn "Zero wipe requested; this may not fully sanitize SSD/NVMe due to wear-leveling."
+    dd_zero
+  else
+    warn "Using shred as best-effort fallback; this may not fully sanitize SSD/NVMe due to wear-leveling."
+    shred_default
+  fi
+
+  sync || true
+  echo "Completed: $DEV"
+  exit 0
+fi
+
+# --- HDD/rotational path ---
+if (( QUICK == 1 )); then
+  dd_zero
+elif (( DOD == 1 )); then
+  dod_hdd
+else
+  if need_cmd shred; then
+    shred_default
+  else
+    warn "'shred' not available; falling back to: random pass + zero pass"
+    dd_urandom
+    dd_zero
+  fi
+fi
+
+sync || true
+echo "Completed: $DEV"
