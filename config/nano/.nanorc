@@ -6,24 +6,24 @@ set linenumbers
 set tabsize 4
 set tabstospaces
 set softwrap
-set smooth
+#set smooth
 set indicator         # right-side scroll indicator
 set stateflags        # show modified / read-only flags
-set morespace         # cleaner UI (hide help bar until needed)
+#set morespace         # cleaner UI (hide help bar until needed)
 set mouse
 
 ## ========== Search ==========
-set caseinsensitive
+#set caseinsensitive
 set regexp
 set wordbounds
 
 ## ========== Whitespace ==========
-set trailingwhitespace
-set whitespace "·" "⇥"
+#set trailingwhitespace
+#set whitespace "·" "⇥"
 
 ## ========== Backups / History ==========
 set backup
-set backupsdir "~/.local/share/nano/backups/"
+#set backupsdir "~/.local/share/nano/backups/"
 set historylog
 
 ## ========== UI Colors (Catppuccin-ish) ==========
@@ -61,4 +61,4 @@ include "/usr/share/nano/*.nanorc"
 include "~/.config/nano/*.nanorc"
 
 ## Custom Catppuccin Mocha theme overrides
-include "~/.config/nano/catppuccin-mocha.nanorc"
+#include "~/.config/nano/catppuccin-mocha.nanorc"
