@@ -58,7 +58,7 @@ set selectedcolor white,cyan
 include "/usr/share/nano/*.nanorc"
 
 ## Load custom syntaxes
-include "~/.config/nano/*.nanorc"
+#include "~/.config/nano/*.nanorc"
 
 ## Custom Catppuccin Mocha theme overrides
 #include "~/.config/nano/catppuccin-mocha.nanorc"
