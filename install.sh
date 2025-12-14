@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -Eeuo pipefail
 
 DOTFILES="${DOTFILES:-$HOME/dotfiles}"
 
@@ -51,7 +51,7 @@ link_file() {
 
 
 sudo apt update
-sudo apt install -y git jq bat curl wget htop nano tmux
+sudo apt install -y git jq yq bat curl wget htop nano tmux
 sudo groupadd admins
 sudo groupadd developers
 
@@ -60,6 +60,7 @@ sudo groupadd developers
 
 
 mkdir -p /opt/scripts/
+mkdir -p /opt/scripts/matt
 chown -R matt:matt /opt/scripts/matt
 chmod -R 750 /opt/scripts/matt
 setfacl -m g:admins:rX /opt/scripts/matt
