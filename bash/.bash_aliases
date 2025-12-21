@@ -391,6 +391,7 @@ alias mem='free -h'
 alias disk='df -h'
 alias ip='ip -c '
 alias reload='source ~/.bashrc'
+alias dotfiles='bash <(curl -fsSL https://raw.githubusercontent.com/program-the-brain-not-the-heartbeat/dotfiles/main/bootstrap.sh)'
 alias ports='sudo lsof -i -P -n'                 # what’s using ports
 alias whichport='sudo lsof -i -P -n | grep'
 alias nodeports='sudo lsof -i -P -n | grep node'
