@@ -3,7 +3,7 @@ name: Update CHANGELOG
 on:
   push:
     branches:
-      - '**'
+      - "**"
   release:
     types: [published]
   workflow_dispatch:
@@ -35,13 +35,13 @@ jobs:
         run: |
           if [ ! -f CHANGELOG.md ]; then
             cat > CHANGELOG.md <<'EOF'
-# Changelog
+            # Changelog
 
-All notable changes to this project will be documented in this file.
+            All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+            ## [Unreleased]
 
-EOF
+            EOF
             git add CHANGELOG.md
             git commit -m "chore(changelog): add initial CHANGELOG.md" || true
           fi
