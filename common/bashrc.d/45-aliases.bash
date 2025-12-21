@@ -3,7 +3,7 @@
 # some more ls aliases
 alias ll='ls -lahF --time-style=long-iso --group-directories-first'
 alias la='ls -A'
-alias l='ls -CF'
+alias l='ls -aCF'
 
 # Alias definitions.
 # You may want to put all your additions into a separate file like
