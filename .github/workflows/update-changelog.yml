@@ -46,12 +46,7 @@ jobs:
       - name: Ensure CHANGELOG.md exists
         run: |
           if [ ! -f CHANGELOG.md ]; then
-            printf '%s
-%s
-%s
-%s
-%s
-' '# Changelog' '' 'All notable changes to this project will be documented in this file.' '' '## [Unreleased]' > CHANGELOG.md
+            printf "%s\n\n%s\n\n%s\n\n" "# Changelog" "All notable changes to this project will be documented in this file." "## [Unreleased]" > CHANGELOG.md
             git add CHANGELOG.md
             git commit -m "chore(changelog): add initial CHANGELOG.md" || true
           fi
