@@ -52,7 +52,14 @@ fi
 chmod +x "$INSTALL_SCRIPT"
 
 echo ">>> Ready to run: $INSTALL_SCRIPT"
-read -r -p "Run install.sh now? [y/N] " CONFIRM
+
+# If caller passed --yes or -y as first argument, auto-confirm and skip prompt
+if [ "${1:-}" = "--yes" ] || [ "${1:-}" = "-y" ]; then
+  CONFIRM="yes"
+  echo ">>> Auto-confirmed via CLI flag ($1)."
+else
+  read -r -p "Run install.sh now? [y/N] " CONFIRM
+fi
 
 case "$CONFIRM" in
   [yY][eE][sS]|[yY])
