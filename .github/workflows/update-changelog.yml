@@ -28,10 +28,6 @@ jobs:
           rustup default stable
           rustup component add rustfmt || true
 
-      - name: Install git-cliff
-        run: |
-          cargo install git-cliff --locked || true
-
       - name: Cache cargo registry and git-cliff build
         uses: actions/cache@v4
         with:
@@ -40,9 +36,17 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             ~/.cargo/target
-          key: ${{ runner.os }}-git-cliff-${{ hashFiles('.github/workflows/update-changelog.yml') }}
+          key: ${{ runner.os }}-git-cliff-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-git-cliff-
+
+      - name: Install git-cliff (skip if cached)
+        run: |
+          if command -v git-cliff >/dev/null 2>&1; then
+            echo "git-cliff found in PATH, skipping install"
+          else
+            cargo install git-cliff --locked || true
+          fi
 
       - name: Ensure CHANGELOG.md exists
         run: |
