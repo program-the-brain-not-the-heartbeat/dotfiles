@@ -31,17 +31,27 @@ jobs:
         run: |
           cargo install git-cliff --locked || true
 
+      - name: Cache cargo registry and git-cliff build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.cargo/target
+          key: ${{ runner.os }}-git-cliff-${{ hashFiles('.github/workflows/update-changelog.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-git-cliff-
+
       - name: Ensure CHANGELOG.md exists
         run: |
           if [ ! -f CHANGELOG.md ]; then
-            cat > CHANGELOG.md <<'EOF'
-            # Changelog
-
-            All notable changes to this project will be documented in this file.
-
-            ## [Unreleased]
-
-            EOF
+            printf '%s
+%s
+%s
+%s
+%s
+' '# Changelog' '' 'All notable changes to this project will be documented in this file.' '' '## [Unreleased]' > CHANGELOG.md
             git add CHANGELOG.md
             git commit -m "chore(changelog): add initial CHANGELOG.md" || true
           fi
