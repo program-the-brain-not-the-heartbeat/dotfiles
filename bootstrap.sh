@@ -21,6 +21,7 @@ echo "Installing..."
 
 REPO_URL="https://github.com/program-the-brain-not-the-heartbeat/dotfiles.git"
 TARGET_DIR="${HOME}/dotfiles"   # change if you prefer ~/.dotfiles etc.
+export DOTFILES_ROOT="${TARGET_DIR}"
 
 echo ">>> Using target directory: $TARGET_DIR"
 
