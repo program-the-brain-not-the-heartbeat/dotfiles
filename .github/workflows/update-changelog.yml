@@ -21,11 +21,12 @@ jobs:
           persist-credentials: true
           fetch-depth: 0
 
-      - name: Setup Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          profile: minimal
+      - name: Install rustup and toolchain (no set-output)
+        run: |
+          curl https://sh.rustup.rs -sSf | sh -s -- -y --no-modify-path
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          rustup default stable
+          rustup component add rustfmt || true
 
       - name: Install git-cliff
         run: |
