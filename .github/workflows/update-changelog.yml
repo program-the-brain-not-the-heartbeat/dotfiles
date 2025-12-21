@@ -1,0 +1,82 @@
+name: Update CHANGELOG
+
+on:
+  push:
+    branches:
+      - '**'
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-changelog:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+          fetch-depth: 0
+
+      - name: Setup Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+
+      - name: Install git-cliff
+        run: |
+          cargo install git-cliff --locked || true
+
+      - name: Ensure CHANGELOG.md exists
+        run: |
+          if [ ! -f CHANGELOG.md ]; then
+            cat > CHANGELOG.md <<'EOF'
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+## [Unreleased]
+
+EOF
+            git add CHANGELOG.md
+            git commit -m "chore(changelog): add initial CHANGELOG.md" || true
+          fi
+
+      - name: Generate Unreleased changelog (git-cliff)
+        run: |
+          if command -v git-cliff >/dev/null 2>&1; then
+            git-cliff -o CHANGELOG.md --prepend || true
+            git add CHANGELOG.md || true
+          else
+            echo "git-cliff not installed; skipping"
+          fi
+
+      - name: If release, move Unreleased into versioned section
+        if: github.event_name == 'release'
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          DATE=$(date -u +%Y-%m-%d)
+          perl -0777 -pe "s/## \[Unreleased\]/## [${TAG}] - ${DATE}/" -i CHANGELOG.md
+          if ! grep -q '^## \[Unreleased\]' CHANGELOG.md; then
+            tmp=$(mktemp)
+            printf "## [Unreleased]\n\n" > "$tmp"
+            cat CHANGELOG.md >> "$tmp"
+            mv "$tmp" CHANGELOG.md
+          fi
+          git add CHANGELOG.md
+
+      - name: Commit & push if changed
+        run: |
+          if ! git diff --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git commit -m "chore(changelog): update CHANGELOG.md [ci skip]" || true
+            git push
+          else
+            echo "No changes to commit"
+          fi
