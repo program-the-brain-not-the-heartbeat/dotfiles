@@ -6,6 +6,7 @@
 [ -z "$PS1" ] && return
 
 export DOTFILES_ROLE="${DOTFILES_ROLE:-base}"
+export DOTFILES_ROOT="${HOME}/dotfiles"
 
 # Load base snippets
 for f in "${DOTFILES}/common/bashrc.d/"*.bash; do
