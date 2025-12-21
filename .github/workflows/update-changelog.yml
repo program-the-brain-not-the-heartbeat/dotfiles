@@ -59,7 +59,7 @@ jobs:
       - name: Generate Unreleased changelog (git-cliff)
         run: |
           if command -v git-cliff >/dev/null 2>&1; then
-            git-cliff -o CHANGELOG.md --prepend || true
+            git-cliff --config .gitcliff.toml -o CHANGELOG.md --prepend || true
             git add CHANGELOG.md || true
           else
             echo "git-cliff not installed; skipping"
