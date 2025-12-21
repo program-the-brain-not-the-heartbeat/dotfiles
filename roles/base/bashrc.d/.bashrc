@@ -9,7 +9,7 @@ export DOTFILES_ROLE="${DOTFILES_ROLE:-base}"
 export DOTFILES_ROOT="${HOME}/dotfiles"
 
 # Load base snippets
-for f in "${DOTFILES}/common/bashrc.d/"*.bash; do
+for f in "${DOTFILES_ROOT}/common/bashrc.d/"*.bash; do
     [ -r "$f" ] && . "$f"
 done
 
