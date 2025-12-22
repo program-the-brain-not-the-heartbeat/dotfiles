@@ -3,6 +3,12 @@ b() {
     #        b crontab -l
     "$@" | bat
 }
+
+# Detect if running via vscode or in a normal terminal
+is_vscode() {
+  [[ "$TERM_PROGRAM" == "vscode" || -n "$VSCODE_PID" ]]
+}
+
 alias timers='systemctl list-timers --all'
 alias tgrep='systemctl list-timers --all | grep -i'
 alias sgrep='systemctl list-units --type=service --all | grep -i'
@@ -132,7 +138,6 @@ unshorten() {
 }
 alias e='${EDITOR:-nano}'
 alias bat='batcat'
-alias cat='bat --paging=never'
 alias lsrem='lsblk -o NAME,HOTPLUG,TRAN,SIZE,MODEL,MOUNTPOINT | awk "$2==1"'
 alias aliases='nano ~/.bash_aliases'
 alias octal='stat -c "%a"'
@@ -523,7 +528,12 @@ function wordfence() {
     /usr/bin/wordfence "$@" --no-banner --no-color
 }
 
-cd() { builtin cd "$@"; ls --color=auto; }
+# Only override specific commands when not inside a VSCode terminal
+if ! is_vscode; then
+    cd() { builtin cd "$@"; ls --color=auto; }
+
+    alias cat='bat --paging=never'
+fi
 alias pwd=' pwd'
 alias llm='ls -lhAt --group-directories-first' ## "m" for sort by last modified date
 alias llc='ls -lhAU --group-directories-first' ## "c" for sort by creation date
