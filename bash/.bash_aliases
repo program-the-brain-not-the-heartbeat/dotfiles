@@ -62,6 +62,7 @@ alias mount-missing='sudo awk '"'"'
   }
 '"'"' /etc/fstab'
 #alias l="find . -mindepth 1 -maxdepth 1 \( -type f -o -type d \) -printf '%f\n' | sort | xargs -d '\n' -I{} ls --color=auto -d {}"
+alias tree="find . -print | sed -e 's;[^/]*/;|____;g;s;____|; |;g'"
 alias lf='ls -1f'
 alias lsblk='lsblk -o NAME,MODEL,SIZE,FSTYPE,MOUNTPOINT'
 alias lsblk+u='lsblk -o NAME,MODEL,SIZE,FSTYPE,LABEL,UUID,TYPE,MOUNTPOINT'
@@ -454,6 +455,7 @@ alias big='du -ah . 2>/dev/null | sort -h | tail -n 20'
 alias bigfiles='find . -type f -exec du -h {} + 2>/dev/null | sort -h | tail -n 20'
 #alias big-files='ls -1Rhs | sed -e "s/^ *//" | grep "^[0-9]" | sort -hr | head -n20'
 alias now='date +"%Y-%m-%d %H:%M:%S"'
+alias nowdate='date +"%d-%m-%Y"'
 alias week='date +%V'
 #alias update="sudo apt-get -qq update && sudo apt-get upgrade"
 function update() {
