@@ -90,9 +90,16 @@ mkdir -p "$HOME/.config/htop"
 
 # Bash
 link_file "$DOTFILES/roles/base/bashrc.d/.bashrc" "$HOME/.bashrc"
-link_file "$DOTFILES/bash/.bash_aliases" "$HOME/.bash_aliases"
 link_file "$DOTFILES/config/.dircolors" "$HOME/.dircolors"
 
+aliases="$HOME/.bash_aliases"
+: > "$aliases"
+
+for f in "$DOTFILES/common/bashrc.d/aliases.d/"*.bash; do
+  [ -f "$f" ] || continue
+  cat "$f" >> "$aliases"
+  echo >> "$aliases"
+done
 
 # SSH configuration
 link_file "$DOTFILES/config/ssh/config" "$HOME/.ssh/config"
