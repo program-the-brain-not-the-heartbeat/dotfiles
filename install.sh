@@ -92,15 +92,23 @@ mkdir -p "$HOME/.config/htop"
 link_file "$DOTFILES/roles/base/bashrc.d/.bashrc" "$HOME/.bashrc"
 link_file "$DOTFILES/config/.dircolors" "$HOME/.dircolors"
 
+rm -f "$HOME/.bash_aliases"
+tmp="$(mktemp)"
 aliases="$HOME/.bash_aliases"
-: > "$aliases"
 
-for f in "$DOTFILES/common/bashrc.d/aliases.d/"*.bash; do
-  [ -f "$f" ] || continue
-  cat "$f" >> "$aliases"
-  echo >> "$aliases"
-done
+{
+  echo "# Generated file — DO NOT EDIT"
+  echo "# Source: $DOTFILES/common/bashrc.d/aliases.d"
+  echo
+  for f in "$DOTFILES/common/bashrc.d/aliases.d/"*.bash; do
+    [ -f "$f" ] || continue
+    echo "# --- $(basename "$f") ---"
+    cat "$f"
+    echo
+  done
+} > "$tmp"
 
+mv "$tmp" "$aliases"
 # SSH configuration
 link_file "$DOTFILES/config/ssh/config" "$HOME/.ssh/config"
 #link_file "$HOME/.ssh/conf.d" "$DOTFILES/config/.ssh/conf.d/"*

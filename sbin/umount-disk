@@ -1,0 +1,92 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+DRIVE_LIB_PATH="${DRIVE_LIB:-/usr/local/lib/mutex-drive.sh}"
+if [[ ! -f "$DRIVE_LIB_PATH" ]]; then
+  SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+  [[ -f "$SCRIPT_DIR/mutex-drive.sh" ]] && DRIVE_LIB_PATH="$SCRIPT_DIR/mutex-drive.sh"
+fi
+# shellcheck disable=SC1090
+source "$DRIVE_LIB_PATH" || { echo "❌ Missing helper library: $DRIVE_LIB_PATH" >&2; exit 1; }
+
+usage() {
+  cat <<'EOF'
+Usage: umount-drive <device|/mnt/name|name> [--lazy|-l]
+EOF
+}
+
+main() {
+  [[ $# -ge 1 ]] || { usage; exit 1; }
+
+  LAZY=0
+  TARGET=""
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --lazy|-l) LAZY=1 ;;
+      -h|--help) usage; exit 0 ;;
+      *)
+        if [[ -z "$TARGET" ]]; then
+          TARGET="$1"
+        else
+          die "Unknown argument: $1"
+        fi
+        ;;
+    esac
+    shift
+  done
+
+  [[ -n "$TARGET" ]] || { usage; exit 1; }
+
+  MP="$(resolve_mountpoint "$TARGET")"
+  MP="$(trim "$MP")"
+  [[ -n "$MP" ]] || die "No mountpoint found for: $TARGET"
+
+  if ! mountpoint -q "$MP"; then
+    info "$MP is not a mountpoint."
+    # Auto-cleanup if it's an orphaned directory
+    cleanup_empty_dir "$MP"
+    exit 0
+  fi
+
+  echo "🔎 Target mountpoint: $MP"
+
+  UMOUNT_CMD=(sudo umount)
+  [[ "$LAZY" -eq 1 ]] && UMOUNT_CMD+=(-l)
+
+  ERRFILE="$(mktemp_file /tmp/umount-drive.XXXXXX)"
+
+  if "${UMOUNT_CMD[@]}" "$MP" 2>"$ERRFILE"; then
+    echo "🧹 Unmounted $MP"
+    rm -f "$ERRFILE"
+    cleanup_empty_dir "$MP"
+    exit 0
+  fi
+
+  echo "❌ Failed to unmount $MP"
+  [[ -s "$ERRFILE" ]] && cat "$ERRFILE"
+  rm -f "$ERRFILE"
+
+  echo
+  echo "🔗 The mountpoint may be busy. Showing processes using $MP (if any):"
+  if have_cmd lsof; then
+    sudo lsof +f -- "$MP" || echo "  (no lsof output)"
+  elif have_cmd fuser; then
+    sudo fuser -vm "$MP" || echo "  (no fuser output)"
+  else
+    echo "  lsof/fuser not available."
+  fi
+
+  echo
+  echo "💡 Tip: you can force a lazy unmount with:"
+  echo "    umount-drive \"$TARGET\" --lazy"
+
+  # Auto-cleanup on failure only if it somehow stopped being a mountpoint (race/partial detach)
+  if ! mountpoint -q "$MP"; then
+    cleanup_empty_dir "$MP"
+  fi
+
+  exit 1
+}
+
+main "$@"

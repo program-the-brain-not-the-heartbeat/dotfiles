@@ -1,0 +1,161 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+DRIVE_LIB_PATH="${DRIVE_LIB:-/usr/local/lib/mutex-drive.sh}"
+if [[ ! -f "$DRIVE_LIB_PATH" ]]; then
+  SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+  [[ -f "$SCRIPT_DIR/mutex-drive.sh" ]] && DRIVE_LIB_PATH="$SCRIPT_DIR/mutex-drive.sh"
+fi
+# shellcheck disable=SC1090
+source "$DRIVE_LIB_PATH" || { echo "❌ Missing helper library: $DRIVE_LIB_PATH" >&2; exit 1; }
+
+usage() {
+  cat <<'EOF'
+Usage: mount-drive <device> [--dir <name>] [--remount] [--ro] [--opts "k=v,..."] [--suffix dev|none|auto]
+EOF
+}
+
+main() {
+  [[ $# -ge 1 ]] || { usage; exit 1; }
+
+  DEV="$1"; shift
+
+  REMOUNT=0
+  READONLY=0
+  CUSTOM_DIR=""
+  EXTRA_OPTS=""
+  SUFFIX_MODE="auto"   # auto|dev|none
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --remount) REMOUNT=1 ;;
+      --ro) READONLY=1 ;;
+      --dir)   [[ $# -ge 2 ]] || die "--dir requires a value";   CUSTOM_DIR="$2"; shift ;;
+      --opts)  [[ $# -ge 2 ]] || die "--opts requires a value";  EXTRA_OPTS="$2"; shift ;;
+      --suffix) [[ $# -ge 2 ]] || die "--suffix requires a value"; SUFFIX_MODE="$2"; shift ;;
+      -h|--help) usage; exit 0 ;;
+      *) die "Unknown option: $1" ;;
+    esac
+    shift
+  done
+
+  [[ -b "$DEV" ]] || die "Not a block device: $DEV"
+  DEV_BASENAME="$(basename "$DEV")"
+
+  # Safety: refuse mounting whole disk if it has partitions
+  DEV_TYPE="$(trim "$(lsblk -ndo TYPE "$DEV" 2>/dev/null || true)")"
+  if [[ "$DEV_TYPE" == "disk" ]]; then
+    PART_LINES="$(lsblk -nr -o NAME,TYPE,FSTYPE "$DEV" 2>/dev/null | awk '$2 == "part"' || true)"
+    if [[ -n "$PART_LINES" ]]; then
+      echo "⚠️  Refusing to mount whole disk: $DEV"
+      echo "    This disk has one or more partitions:"
+      lsblk "$DEV" || true
+      echo "    Please mount a specific partition instead (e.g. ${DEV}1, ${DEV}2, nvme0n1p1, etc.)."
+      exit 1
+    fi
+  fi
+
+  FSTYPE="$(trim "$(lsblk -no FSTYPE "$DEV" 2>/dev/null || true)")"
+  [[ -z "$FSTYPE" ]] && FSTYPE="$(trim "$(blkid -o value -s TYPE "$DEV" 2>/dev/null || true)")"
+  FSTYPE="${FSTYPE%%[[:space:]]*}"
+
+  LABEL="$(trim "$(lsblk -no LABEL "$DEV" 2>/dev/null || true)")"
+  LABEL="${LABEL%%[[:space:]]*}"
+  [[ -z "$LABEL" ]] && LABEL="$(trim "$(blkid -o value -s LABEL "$DEV" 2>/dev/null || true)")"
+  LABEL="${LABEL%%[[:space:]]*}"
+
+  UUID="$(trim "$(blkid -o value -s UUID "$DEV" 2>/dev/null || true)")"
+
+  BUS="$(trim "$(lsblk -no TRAN "$DEV" 2>/dev/null || true)")"
+  case "$BUS" in
+    usb)  PREFIX="usb" ;;
+    sata) PREFIX="sata" ;;
+    nvme) PREFIX="nvme" ;;
+    *)    PREFIX="disk" ;;
+  esac
+
+  if [[ -n "$CUSTOM_DIR" ]]; then
+    BASE_NAME="$CUSTOM_DIR"
+  elif [[ -n "$LABEL" ]]; then
+    BASE_NAME="$LABEL"
+  elif [[ -n "$UUID" ]]; then
+    BASE_NAME="$(printf '%s' "$UUID" | cut -c1-8)"
+  else
+    BASE_NAME="$DEV_BASENAME"
+  fi
+
+  BASE_NAME="$(sanitize "$BASE_NAME")"
+  [[ -z "$BASE_NAME" ]] && BASE_NAME="$(sanitize "$DEV_BASENAME")"
+
+  is_partition=0
+  case "$DEV_BASENAME" in
+    *[0-9] | *p[0-9]) is_partition=1 ;;
+  esac
+
+  DEV_SUFFIX="$(sanitize "$DEV_BASENAME")"
+
+  case "$SUFFIX_MODE" in
+    dev|auto) APPEND_SUFFIX=$is_partition ;;
+    none)     APPEND_SUFFIX=0 ;;
+    *)        APPEND_SUFFIX=$is_partition ;;
+  esac
+
+  NAME="$BASE_NAME"
+  if [[ "$APPEND_SUFFIX" -eq 1 ]]; then
+    if [[ "$BASE_NAME" != "$DEV_SUFFIX" && "$BASE_NAME" != "${DEV_SUFFIX%-*}" ]]; then
+      NAME="${BASE_NAME}-${DEV_SUFFIX}"
+    fi
+  fi
+
+  NAME="$(sanitize "$NAME")"
+  MNT="/mnt/${PREFIX}-${NAME}"
+
+  CURRENT_MP="$(findmnt -nr -S "$DEV" -o TARGET 2>/dev/null || true)"
+  if [[ -n "$CURRENT_MP" ]]; then
+    if [[ "$REMOUNT" -eq 1 ]]; then
+      OPTS="remount"
+      [[ "$READONLY" -eq 1 ]] && OPTS="$OPTS,ro"
+      [[ -n "$EXTRA_OPTS" ]] && OPTS="$OPTS,$EXTRA_OPTS"
+      sudo mount -o "$OPTS" "$CURRENT_MP" || die "Failed to remount $DEV"
+      echo "🔁 Remounted $DEV (${FSTYPE:-unknown}) at $CURRENT_MP with: $OPTS"
+      exit 0
+    fi
+    echo "✅ Already mounted: $DEV → $CURRENT_MP"
+    exit 0
+  fi
+
+  if mountpoint -q "$MNT"; then
+    OTHER_SRC="$(findmnt -nr -T "$MNT" -o SOURCE 2>/dev/null || true)"
+    if [[ "$OTHER_SRC" != "$DEV" ]]; then
+      MNT="/mnt/${PREFIX}-${NAME}-${DEV_SUFFIX}"
+    fi
+  fi
+
+  sudo mkdir -p "$MNT"
+
+  OPTS="rw"
+  [[ "$READONLY" -eq 1 ]] && OPTS="ro"
+  [[ -n "$EXTRA_OPTS" ]] && OPTS="$OPTS,$EXTRA_OPTS"
+
+  case "$FSTYPE" in
+    ntfs|ntfs3) if grep -qw ntfs3 /proc/filesystems; then TYPE="ntfs3"; else TYPE="ntfs"; fi ;;
+    exfat) TYPE="exfat" ;;
+    vfat|fat|fat32) TYPE="vfat" ;;
+    xfs) TYPE="xfs" ;;
+    btrfs) TYPE="btrfs" ;;
+    ext2|ext3|ext4) TYPE="$FSTYPE" ;;
+    ""|*) TYPE="${FSTYPE:-auto}" ;;
+  esac
+
+  if sudo mount -t "$TYPE" -o "$OPTS" "$DEV" "$MNT"; then
+    echo "📂 Mounted $DEV ($TYPE) → $MNT"
+    findmnt -nr -S "$DEV" || true
+    exit 0
+  fi
+
+  echo "❌ Failed to mount $DEV ($TYPE) at $MNT" >&2
+  cleanup_empty_dir "$MNT"
+  exit 1
+}
+
+main "$@"
