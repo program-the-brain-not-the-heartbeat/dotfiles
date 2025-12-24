@@ -109,6 +109,13 @@ aliases="$HOME/.bash_aliases"
 } > "$tmp"
 
 mv "$tmp" "$aliases"
+
+if [[ -d "${DOTFILES}/sbin" ]]; then
+  install -d "/usr/local/sbin"
+  cp -a "${DOTFILES}/sbin"/. "/usr/local/sbin/"
+fi
+
+
 # SSH configuration
 link_file "$DOTFILES/config/ssh/config" "$HOME/.ssh/config"
 #link_file "$HOME/.ssh/conf.d" "$DOTFILES/config/.ssh/conf.d/"*
