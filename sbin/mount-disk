@@ -11,7 +11,7 @@ source "$DRIVE_LIB_PATH" || { echo "❌ Missing helper library: $DRIVE_LIB_PATH"
 
 usage() {
   cat <<'EOF'
-Usage: mount-drive <device> [--dir <name>] [--remount] [--ro] [--opts "k=v,..."] [--suffix dev|none|auto]
+Usage: mount-disk <device> [--dir <name>] [--remount] [--ro] [--opts "k=v,..."] [--suffix dev|none|auto]
 EOF
 }
 

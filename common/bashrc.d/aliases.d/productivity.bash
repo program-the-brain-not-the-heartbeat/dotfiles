@@ -44,11 +44,11 @@ alias recent1h='find . -mmin -60 -type f 2>/dev/null'
 alias crons='sudo grep -R "" /etc/cron* /var/spool/cron/crontabs 2>/dev/null'
 
 # Custom aliases for /sbin/mount-disk and /sbin/umount-disk
-alias mount-disk='mount-drive'
-alias unmount-disk='umount-drive'
-alias unmount-disk='umount-drive'
-alias unmount='umount-drive'
-alias unmount-drive='umount-drive'
+alias mount-drive='mount-disk'
+alias unmount-disk='umount-disk'
+alias umount-disk='umount-disk'
+alias unmount='umount-disk'
+alias unmount-drive='umount-disk'
 
 alias llm='ls -lhAt --group-directories-first' ## "m" for sort by last modified date
 alias lls='ls -lhAS --group-directories-first' ## "s" for sort by size

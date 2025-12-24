@@ -72,9 +72,14 @@ case "$CONFIRM" in
     ;;
 esac
 
+# apt purge -y \
+#   apport \
+#   popularity-contest \
+#   ubuntu-advantage-tools
 
-echo 1 > /proc/sys/kernel/task_delayacct
-cat <<EOF > /etc/sysctl.d/99-task-delayacct.conf
-kernel.task_delayacct = 1
-EOF
-sysctl --system
+# apt autoremove -y
+# echo 1 > /proc/sys/kernel/task_delayacct
+# cat <<EOF > /etc/sysctl.d/99-task-delayacct.conf
+# kernel.task_delayacct = 1
+# EOF
+# sysctl --system

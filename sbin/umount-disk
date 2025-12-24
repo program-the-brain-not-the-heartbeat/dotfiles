@@ -11,7 +11,7 @@ source "$DRIVE_LIB_PATH" || { echo "❌ Missing helper library: $DRIVE_LIB_PATH"
 
 usage() {
   cat <<'EOF'
-Usage: umount-drive <device|/mnt/name|name> [--lazy|-l]
+Usage: umount-disk <device|/mnt/name|name> [--lazy|-l]
 EOF
 }
 
@@ -54,7 +54,7 @@ main() {
   UMOUNT_CMD=(sudo umount)
   [[ "$LAZY" -eq 1 ]] && UMOUNT_CMD+=(-l)
 
-  ERRFILE="$(mktemp_file /tmp/umount-drive.XXXXXX)"
+  ERRFILE="$(mktemp_file /tmp/umount-disk.XXXXXX)"
 
   if "${UMOUNT_CMD[@]}" "$MP" 2>"$ERRFILE"; then
     echo "🧹 Unmounted $MP"
@@ -79,7 +79,7 @@ main() {
 
   echo
   echo "💡 Tip: you can force a lazy unmount with:"
-  echo "    umount-drive \"$TARGET\" --lazy"
+  echo "    umount-disk \"$TARGET\" --lazy"
 
   # Auto-cleanup on failure only if it somehow stopped being a mountpoint (race/partial detach)
   if ! mountpoint -q "$MP"; then

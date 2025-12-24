@@ -111,10 +111,30 @@ aliases="$HOME/.bash_aliases"
 mv "$tmp" "$aliases"
 
 if [[ -d "${DOTFILES}/sbin" ]]; then
-  install -d "/usr/local/sbin"
-  cp -a "${DOTFILES}/sbin"/. "/usr/local/sbin/"
+  find "${DOTFILES}/sbin" -type d -print0 |
+    while IFS= read -r -d '' dir; do
+      install -d -o root -g root "/usr/local/sbin/${dir#${DOTFILES}/sbin/}"
+    done
+
+  find "${DOTFILES}/sbin" -type f -print0 |
+    while IFS= read -r -d '' file; do
+      install -o root -g root -m 0755 \
+        "$file" "/usr/local/sbin/${file#${DOTFILES}/sbin/}"
+    done
 fi
 
+if [[ -d "${DOTFILES}/lib" ]]; then
+  find "${DOTFILES}/lib" -type d -print0 |
+    while IFS= read -r -d '' dir; do
+      install -d -o root -g root "/usr/local/lib/${dir#${DOTFILES}/lib/}"
+    done
+
+  find "${DOTFILES}/lib" -type f -print0 |
+    while IFS= read -r -d '' file; do
+      install -o root -g root -m 0755 \
+        "$file" "/usr/local/lib/${file#${DOTFILES}/lib/}"
+    done
+fi
 
 # SSH configuration
 link_file "$DOTFILES/config/ssh/config" "$HOME/.ssh/config"
