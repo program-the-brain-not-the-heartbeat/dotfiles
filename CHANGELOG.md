@@ -1,5 +1,10 @@
 ## [Unreleased]
 
+### 🐛 Bug Fixes
+
+- Tag/release bug on changelog
+## [Unreleased]
+
 ### 🚀 Features
 
 - Add nano preferences
