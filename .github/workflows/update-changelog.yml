@@ -56,18 +56,11 @@ jobs:
             git commit -m "chore(changelog): add initial CHANGELOG.md" || true
           fi
 
-      - name: Generate Unreleased changelog (git-cliff)
+      - name: Generate Unreleased changelog (git-cliff) and push
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git-cliff --config .gitcliff.toml -u --prepend CHANGELOG.md
           git add CHANGELOG.md
           git commit -m "chore(changelog): update CHANGELOG.md [ci skip]" || true
-
-      - name: Commit & push if changed
-        run: |
-          if ! git diff --quiet; then
-            git push
-          else
-            echo "No changes to commit"
-          fi
+          git push
