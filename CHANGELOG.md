@@ -11,7 +11,7 @@
 ### ⚙️ Miscellaneous Tasks
 
 - *(changelog)* Update CHANGELOG.md [ci skip]
-  
+- *(changelog)* Update CHANGELOG.md [ci skip]
 ## [1.0.0] - 2025-12-26
 
 ### 🚀 Features
