@@ -1,18 +1,3 @@
-## [Unreleased]
-
-### 🐛 Bug Fixes
-
-- Tag/release bug on changelog
-
-### 🚜 Refactor
-
-- Redo the git cliff workflow
-
-### ⚙️ Miscellaneous Tasks
-
-- _(changelog)_ Update CHANGELOG.md [ci skip]
-- _(changelog)_ Update CHANGELOG.md [ci skip]
-
 ## [1.0.0] - 2025-12-26
 
 ### 🚀 Features
