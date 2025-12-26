@@ -58,48 +58,8 @@ jobs:
 
       - name: Generate Unreleased changelog (git-cliff)
         run: |
-          if command -v git-cliff >/dev/null 2>&1; then
-            git-cliff --config .gitcliff.toml -u --prepend CHANGELOG.md || true
-            git add CHANGELOG.md || true
-          else
-            echo "git-cliff not installed; skipping"
-          fi
-
-      - name: Fallback — populate Unreleased via git log if empty
-        run: |
-          # detect any non-empty lines under the Unreleased header
-          if awk '/^## \[Unreleased\]/{p=1; next} /^## \[/{if(p) exit} p{ if(/\S/) {print; found=1; exit} } END{ if(!found) exit 1 }' CHANGELOG.md >/dev/null 2>&1; then
-            echo "Unreleased already has content; skipping fallback"
-          else
-            echo "Unreleased empty — generating entries from git log"
-            if git describe --tags --abbrev=0 >/dev/null 2>&1; then
-              RANGE="$(git describe --tags --abbrev=0)..HEAD"
-            else
-              RANGE="HEAD"
-            fi
-            git log --pretty=format:'- %s (%h)' --no-merges $RANGE > /tmp/unreleased.txt || true
-            if [ -s /tmp/unreleased.txt ]; then
-              awk 'BEGIN{printed=0} {print} /^## \[Unreleased\]/{ if(!printed){ while((getline line < "/tmp/unreleased.txt")>0) print line; printed=1 } }' CHANGELOG.md > CHANGELOG.md.tmp && mv CHANGELOG.md.tmp CHANGELOG.md
-              git add CHANGELOG.md || true
-            else
-              echo "No git log entries found for range: $RANGE"
-            fi
-          fi
-
-      - name: If release, move Unreleased into versioned section
-        if: github.event_name == 'release'
-        env:
-          TAG: ${{ github.event.release.tag_name }}
-        run: |
-          DATE=$(date -u +%Y-%m-%d)
-          perl -0777 -pe "s/## \[Unreleased\]/## [${TAG}] - ${DATE}/" -i CHANGELOG.md
-          if ! grep -q '^## \[Unreleased\]' CHANGELOG.md; then
-            tmp=$(mktemp)
-            printf "## [Unreleased]\n\n" > "$tmp"
-            cat CHANGELOG.md >> "$tmp"
-            mv "$tmp" CHANGELOG.md
-          fi
-          git add CHANGELOG.md
+          git-cliff --config .gitcliff.toml -u --prepend CHANGELOG.md || true
+          git add CHANGELOG.md || true
 
       - name: Commit & push if changed
         run: |
