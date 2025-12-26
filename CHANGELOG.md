@@ -1,3 +1,20 @@
+## [unreleased]
+
+### 🐛 Bug Fixes
+
+- Tag/release bug on changelog
+- Git cliff action
+
+### 🚜 Refactor
+
+- Redo the git cliff workflow
+- Update cliff workflow
+
+### ⚙️ Miscellaneous Tasks
+
+- *(changelog)* Update CHANGELOG.md [ci skip]
+- *(changelog)* Update CHANGELOG.md [ci skip]
+- *(changelog)* Update CHANGELOG.md [ci skip]
 ## [1.0.0] - 2025-12-26
 
 ### 🚀 Features
@@ -9,7 +26,7 @@
 - Add hot-reloading of bash aliases
 - Add some structure for future
 - Add ssh config and glob linking (untested)
-- Add sk suffix for dircolors for private keys ending in "\_sk"
+- Add sk suffix for dircolors for private keys ending in "_sk"
 - Add tmux config
 - Add htop
 - Cpe
@@ -44,7 +61,7 @@
 - Add root variable
 - Show hidden files by default
 - Refetch latest dotfiles alias
-- _(bootstrap)_ Accept --yes/-y to auto-confirm install prompt
+- *(bootstrap)* Accept --yes/-y to auto-confirm install prompt
 - Fallback
 - Add tree
 - Concat aliases into ~/.bash_aliases
@@ -72,13 +89,13 @@
 - Error on existing groups
 - Don't die if acl not enabled
 - Comment out nano stuff for < 7.0
-- Still loading theme on \*.nanorc
+- Still loading theme on *.nanorc
 - Path bug
 - Path bug
-- _(dotshell)_ Always pass --yes in dotfiles helper
+- *(dotshell)* Always pass --yes in dotfiles helper
 - Updated workflow
 - Cleanup changelog.md
-- _(test)_ Add dummy entry for changelog test
+- *(test)* Add dummy entry for changelog test
 - Don't override specific commands if inside vscode
 - Broken aliases for mount drive
 - Use default git-cliff config
@@ -102,19 +119,19 @@
 
 ### ⚙️ Miscellaneous Tasks
 
-- _(changelog)_ Add initial CHANGELOG.md
-- _(changelog)_ Use git-cliff to generate changelog
+- *(changelog)* Add initial CHANGELOG.md
+- *(changelog)* Use git-cliff to generate changelog
 - Trigger changelog workflow (manual)
-- _(changelog)_ Cache cargo and fix heredoc
+- *(changelog)* Cache cargo and fix heredoc
 - Trigger changelog workflow (cache test)
-- _(changelog)_ Add initial CHANGELOG.md
+- *(changelog)* Add initial CHANGELOG.md
 - Trigger update-changelog workflow (manual)
-- _(changelog)_ Fix printf syntax in workflow
-- _(changelog)_ Avoid set-output by installing rustup and using GITHUB_PATH
-- _(changelog)_ Cache before install and skip install if cached
-- _(changelog)_ Add .gitcliff.toml and use it to include all commits in Unreleased
-- _(changelog)_ Fix git-cliff --prepend usage
+- *(changelog)* Fix printf syntax in workflow
+- *(changelog)* Avoid set-output by installing rustup and using GITHUB_PATH
+- *(changelog)* Cache before install and skip install if cached
+- *(changelog)* Add .gitcliff.toml and use it to include all commits in Unreleased
+- *(changelog)* Fix git-cliff --prepend usage
 - Trigger changelog workflow (fix prepend)
-- _(changelog)_ Fix .gitcliff.toml quoting for regexes
-- _(changelog)_ Generate Unreleased with git-cliff (-u)
-- _(changelog)_ Update CHANGELOG.md [ci skip]
+- *(changelog)* Fix .gitcliff.toml quoting for regexes
+- *(changelog)* Generate Unreleased with git-cliff (-u)
+- *(changelog)* Update CHANGELOG.md [ci skip]
