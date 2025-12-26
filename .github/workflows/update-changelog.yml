@@ -20,6 +20,7 @@ jobs:
         with:
           persist-credentials: true
           fetch-depth: 0
+          ref: main
 
       - name: Install rustup and toolchain (no set-output)
         run: |
