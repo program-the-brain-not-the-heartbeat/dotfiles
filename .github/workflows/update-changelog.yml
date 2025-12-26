@@ -1,4 +1,4 @@
-name: Update CHANGELOG
+name: Update CHANGELOG.md
 
 on:
   push:
@@ -16,52 +16,29 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           persist-credentials: true
           fetch-depth: 0
           ref: main
 
-      - name: Install rustup and toolchain (no set-output)
-        run: |
-          curl https://sh.rustup.rs -sSf | sh -s -- -y --no-modify-path
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-          rustup default stable
-          rustup component add rustfmt || true
-
-      - name: Cache cargo registry and git-cliff build
-        uses: actions/cache@v4
+      - name: Generate a changelog
+        uses: orhun/git-cliff-action@v4
+        id: git-cliff
         with:
-          path: |
-            ~/.cargo/bin
-            ~/.cargo/registry
-            ~/.cargo/git
-            ~/.cargo/target
-          key: ${{ runner.os }}-git-cliff-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-git-cliff-
+          config: cliff.toml
+          args: --verbose
+        env:
+          OUTPUT: CHANGELOG.md
 
-      - name: Install git-cliff (skip if cached)
-        run: |
-          if command -v git-cliff >/dev/null 2>&1; then
-            echo "git-cliff found in PATH, skipping install"
-          else
-            cargo install git-cliff --locked || true
-          fi
+      - name: Print the changelog
+        run: cat "${{ steps.git-cliff.outputs.changelog }}"
 
-      - name: Ensure CHANGELOG.md exists
-        run: |
-          if [ ! -f CHANGELOG.md ]; then
-            printf "%s\n\n%s\n\n%s\n\n" "# Changelog" "All notable changes to this project will be documented in this file." "## [Unreleased]" > CHANGELOG.md
-            git add CHANGELOG.md
-            git commit -m "chore(changelog): add initial CHANGELOG.md" || true
-          fi
-
-      - name: Generate Unreleased changelog (git-cliff) and push
+      - name: Commit Changelog
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git-cliff --config .gitcliff.toml -u --prepend CHANGELOG.md
+          set +e
           git add CHANGELOG.md
           git commit -m "chore(changelog): update CHANGELOG.md [ci skip]" || true
           git push
