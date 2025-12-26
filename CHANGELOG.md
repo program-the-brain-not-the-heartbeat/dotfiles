@@ -1,9 +1,17 @@
-## [Unreleased]
+## [unreleased]
 
 ### 🐛 Bug Fixes
 
 - Tag/release bug on changelog
-## [Unreleased]
+
+### 🚜 Refactor
+
+- Redo the git cliff workflow
+
+### ⚙️ Miscellaneous Tasks
+
+- *(changelog)* Update CHANGELOG.md [ci skip]
+## [1.0.0] - 2025-12-26
 
 ### 🚀 Features
 
@@ -122,8 +130,4 @@
 - Trigger changelog workflow (fix prepend)
 - *(changelog)* Fix .gitcliff.toml quoting for regexes
 - *(changelog)* Generate Unreleased with git-cliff (-u)
-# Changelog
-
-All notable changes to this project will be documented in this file.
-
-## [Unreleased]
+- *(changelog)* Update CHANGELOG.md [ci skip]
