@@ -1,0 +1,159 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="${1:-}"
+NEW_ROOT="${2:-/vault/media/TV}"
+ACTION="${3:-test}"   # change to "move", "copy", "hardlink", etc.
+
+if [[ ! -d "$ROOT" ]]; then
+    echo "$ROOT is not a directory"
+    exit 1
+fi
+
+
+# Collect source dirs once (handles spaces safely)
+# Works with mixed layouts: per-show folders, per-season packs, etc.
+mapfile -d '' -t srcDirs < <(find "$ROOT" -mindepth 1 -maxdepth 1 -type d -print0 | sort -z)
+
+if (( ${#srcDirs[@]} == 0 )); then
+    srcDirs=("$ROOT")
+fi
+
+for srcDir in "${srcDirs[@]}"; do
+    echo "=========================================================="
+    echo " Processing source folder: $srcDir into $NEW_ROOT         "
+    echo "=========================================================="
+
+    tmp_log="$(mktemp)"
+    mkdir -p "$NEW_ROOT" || true
+
+    ############################################################
+    # 1) First pass: non-interactive, capture log+status
+    ############################################################
+    set +e   # allow filebot to fail without killing the script
+    filebot -r -rename "$srcDir" \
+        --action "$ACTION" \
+        --db TheMovieDB::TV \
+        --apply prune \
+        --filter "type == 'Episode'" \
+        --file-filter "f.video" \
+        --output "$NEW_ROOT" \
+        --format '{
+          def baseName = n ?: "Unknown Show"
+
+          // Clean show name for filesystem
+          def show = baseName
+            .replaceAll(/[\/:*?"<>|]/, " ")
+            .trim()
+            .replaceAll(/\s+/, " ")
+
+          // Clean episode title
+          def rawTitle = t ?: "Episode"
+          def title = rawTitle
+            .replaceAll(/[\/:*?"<>|]/, " ")
+            .trim()
+            .replaceAll(/\s+/, " ")
+
+          def year = y
+
+          // SAFELY get season / episode numbers
+          def sNum = any{ s }{ null }
+          def eNum = any{ e }{ null }
+
+          // If we *really* don’t have season/episode info, skip this file
+          if (sNum == null || eNum == null) {
+            return null
+          }
+
+          // Season folder: "Season 02" or "Specials" for s=0
+          def seasonFolder = (sNum == 0 ? "Specials" : "Season " + String.format("%02d", (sNum as int)))
+
+          // Destination show dir WITH year
+          def showDirName = year ? "${show} (${year})" : show
+
+          // Filename show label WITHOUT year
+          def showLabel = show
+
+          // Episode code "S02E07"
+          def epCode = String.format("S%02dE%02d", (sNum as int), (eNum as int))
+
+          // Final path (relative to --output)
+          return "${showDirName}/${seasonFolder}/${showLabel} ${epCode} - ${title}"
+        }' \
+        >"$tmp_log" 2>&1
+    status=$?
+    set -e   # re-enable strict mode
+
+    # Show what it would do / did
+    cat "$tmp_log"
+
+    ############################################################
+    # 2) Ambiguity: rerun this source only with --mode interactive
+    ############################################################
+    if grep -q "Multiple options for ambiguous file path" "$tmp_log"; then
+        echo
+        echo "⚠️  Ambiguities detected in $srcDir — rerunning with --mode interactive"
+        echo
+
+        if [[ -t 0 ]]; then
+            set +e
+            filebot -r -rename "$srcDir" \
+                --mode interactive \
+                --apply prune \
+                --action "$ACTION" \
+                --db TheMovieDB::TV \
+                --filter "type == 'Episode'" \
+                --file-filter "f.video" \
+                --output "$NEW_ROOT" \
+                --format '{
+                  def baseName = n ?: "Unknown Show"
+
+                  def show = baseName
+                    .replaceAll(/[\/:*?"<>|]/, " ")
+                    .trim()
+                    .replaceAll(/\s+/, " ")
+
+                  def rawTitle = t ?: "Episode"
+                  def title = rawTitle
+                    .replaceAll(/[\/:*?"<>|]/, " ")
+                    .trim()
+                    .replaceAll(/\s+/, " ")
+
+                  def year = y
+
+                  def sNum = any{ s }{ null }
+                  def eNum = any{ e }{ null }
+
+                  // If still no season/episode after interactive match, skip
+                  if (sNum == null || eNum == null) {
+                    return null
+                  }
+
+                  def seasonFolder = (sNum == 0 ? "Specials" : "Season " + String.format("%02d", (sNum as int)))
+
+                  def showDirName = year ? "${show} (${year})" : show
+                  def showLabel   = show
+
+                  def epCode = String.format("S%02dE%02d", (sNum as int), (eNum as int))
+
+                  return "${showDirName}/${seasonFolder}/${showLabel} ${epCode} - ${title}"
+                }'
+            status=$?
+            set -e
+        else
+            echo "Not a TTY; cannot use --mode interactive for $srcDir"
+        fi
+
+    ############################################################
+    # 3) No ambiguity but non-zero exit → real error (log + continue)
+    ############################################################
+    elif (( status != 0 )); then
+        echo
+        echo "❌ FileBot error for $srcDir (exit $status):"
+        cat "$tmp_log"
+        echo
+        # continue to next folder
+    fi
+
+    rm -f "$tmp_log"
+done
