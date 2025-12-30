@@ -1,0 +1,10 @@
+[Unit]
+Description=Sync IPTV
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=matt
+EnvironmentFile=/etc/mutexlabs/sync-iptv.env
+ExecStart=/opt/mutexlabs/scripts/sync-iptv.sh

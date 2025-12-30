@@ -14,6 +14,9 @@
 !bin/
 !sbin/
 
+# Secrets
+**/**/secrets.d/*
+
 # Custom scripts
 !/usr/local/sbin/*
 !/sbin/*

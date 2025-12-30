@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# Clean IPTV M3U8 playlist by removing unwanted group-title categories
+set -euo pipefail
+
+REMOTE_M3U_PATH="${REMOTE_PATH}/${PLATFORM_NAME}.m3u"
+REMOTE_XML_PATH="${REMOTE_PATH}/${PLATFORM_NAME}.xml"
+
+echo "Starting IPTV playlist syncing from ${BLOCKED_DOMAIN}"
+echo "Syncing to sftp://${REMOTE_USER}@${REMOTE_DESTINATION}:${REMOTE_M3U_PATH}..."
+
+curl --silent "${UNBLOCKED_DOMAIN}/playlist/${PLATFORM_USERNAME}/${PLATFORM_PASSWORD}/m3u_plus?output=m3u8" -o "$LOCAL_M3U_PATH"
+curl --silent -o "$LOCAL_XML_PATH" "${UNBLOCKED_DOMAIN}/xmltv.php?username=${PLATFORM_USERNAME}&password=${PLATFORM_PASSWORD}"
+
+echo "Replacing blocked domain with unblocked domain..."
+sed -i "s|$BLOCKED_DOMAIN|$UNBLOCKED_DOMAIN|g" "$LOCAL_M3U_PATH"
+sed -i "s|$BLOCKED_DOMAIN|$UNBLOCKED_DOMAIN|g" "$LOCAL_XML_PATH"
+
+
+if [[ -f "$LOCAL_SKIP_PATH" ]]; then
+    echo "Skiplist file $LOCAL_SKIP_PATH found..."
+    # Join blocklist lines into a single regex pattern
+    PATTERN=$(tr '\n' '|' < "$LOCAL_SKIP_PATH" | sed 's/|$//')
+
+    awk -v pat="$PATTERN" '
+    BEGIN { IGNORECASE=1 }
+    /#EXTINF/ {
+        if ($0 ~ pat) {
+        skip=1; next
+        }
+    }
+    skip { skip=0; next }
+    { print }
+    ' "$LOCAL_M3U_PATH" > "$LOCAL_M3U_PATH_CLEANED"
+fi
+
+echo "Uploading to VPS..."
+scp -q "$LOCAL_M3U_PATH_CLEANED" "$REMOTE_USER@$REMOTE_DESTINATION:$REMOTE_M3U_PATH"
+scp -q "$LOCAL_XML_PATH" "$REMOTE_USER@$REMOTE_DESTINATION:$REMOTE_XML_PATH"
+
+rm -f "$LOCAL_M3U_PATH_CLEANED" || true
+rm -f "$LOCAL_M3U_PATH" || true
+rm -f "$LOCAL_XML_PATH" || true
+
+echo "Cleaned playlist saved to $LOCAL_M3U_PATH_CLEANED and uploaded to $REMOTE_DESTINATION:$REMOTE_M3U_PATH"
+exit 0
