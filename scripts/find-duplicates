@@ -1,0 +1,139 @@
+#!/bin/bash
+#
+# find-duplicates
+#
+# PURPOSE
+#   Scans a directory tree to identify:
+#     1) Duplicate files based on file CONTENT (MD5 checksum)
+#     2) Files with identical or case-insensitive duplicate NAMES
+#
+# OVERVIEW
+#   - Recursively scans a target directory (default: /vault)
+#   - Computes MD5 checksums for all files
+#   - Detects duplicate files by comparing checksums
+#   - Detects files with the same name (case-insensitive), regardless of path
+#   - Writes a consolidated report to an output file
+#
+# DUPLICATE DETECTION LOGIC
+#   Content duplicates:
+#     - Uses md5sum to hash file contents
+#     - Sorts hashes to group identical content
+#     - Outputs only files that share the same checksum
+#
+#   Name duplicates:
+#     - Extracts filenames (no paths)
+#     - Normalizes to lowercase
+#     - Reports names that appear more than once
+#
+# USAGE
+#   ./find-duplicates [options]
+#
+# OPTIONS
+#   -d, --directory <path>
+#       Directory to scan (default: /vault)
+#
+#   -o, --output <file>
+#       Output report file (default: ./duplicates_report.txt)
+#
+#   -h, --help
+#       Display usage information
+#
+# OUTPUT
+#   - A text report containing:
+#       * Lists of duplicate files by content
+#       * A list of duplicate filenames (if any)
+#   - Console output indicating progress and total execution time
+#
+# SAFETY & NOTES
+#   - Read-only: does NOT modify or delete files
+#   - Uses temporary files that are automatically cleaned up on exit
+#   - Errors cause immediate exit (set -e)
+#   - Files unreadable due to permissions are silently skipped
+#
+# REQUIREMENTS
+#   - bash
+#   - find, md5sum, awk, sed, sort, uniq, getopt
+#
+# PERFORMANCE
+#   - Runtime scales with number and size of files
+#   - MD5 is used for speed, not cryptographic security
+#
+set -euo pipefail
+
+# Start time tracking
+START_TIME=$(date +%s)
+
+# Function to display usage
+usage() {
+    echo "Usage: $0 [-d /path/to/folder] [-o /path/to/outputfile]"
+    echo "    -d, --directory   Directory to scan (default: /vault)"
+    echo "    -o, --output      Output file for results (default: ./duplicates_report.txt)"
+    exit 1
+}
+
+# Default values
+SCAN_DIR="/vault"
+OUTPUT_FILE="./duplicates_report.txt"
+
+# Parse arguments
+PARSED_ARGS=$(getopt -o d:o:h --long directory:,output:,help -n "$0" -- "$@")
+if [ $? -ne 0 ]; then
+    usage
+fi
+
+eval set -- "$PARSED_ARGS"
+
+while true; do
+    case "$1" in
+        -d|--directory)
+            SCAN_DIR="$2"; shift 2 ;;
+        -o|--output)
+            OUTPUT_FILE="$2"; shift 2 ;;
+        -h|--help)
+            usage ;;
+        --)
+            shift; break ;;
+        *)
+            usage ;;
+    esac
+done
+
+# Ensure SCAN_DIR exists
+if [ ! -d "$SCAN_DIR" ]; then
+    echo "Error: Directory $SCAN_DIR does not exist." >&2
+    exit 1
+fi
+
+# Notify the user
+echo "Scanning directory: $SCAN_DIR"
+echo "Results will be saved to: $OUTPUT_FILE"
+
+# Temporary file to store checksums
+CHECKSUM_FILE=$(mktemp)
+
+# Generate checksums and check for duplicates
+trap "rm -f $CHECKSUM_FILE" EXIT
+
+echo "Finding duplicate files based on content..."
+find "$SCAN_DIR" -type f -exec md5sum {} + 2>/dev/null | sort | tee "$CHECKSUM_FILE" | awk 'BEGIN { duplicate = 0 } { if ($1 == prev) { duplicate = 1; print prev_line; print $0 } prev=$1; prev_line=$0 }' > "$OUTPUT_FILE"
+
+# Check for similar file names
+SIMILAR_FILE_REPORT=$(mktemp)
+echo "Finding files with similar names..."
+find "$SCAN_DIR" -type f | sed 's#.*/##' | awk '{ print tolower($0) }' | sort | uniq -d > "$SIMILAR_FILE_REPORT"
+
+if [[ -s "$SIMILAR_FILE_REPORT" ]]; then
+    echo "\nFiles with similar names:" >> "$OUTPUT_FILE"
+    cat "$SIMILAR_FILE_REPORT" >> "$OUTPUT_FILE"
+else
+    echo "\nNo similar file names found." >> "$OUTPUT_FILE"
+fi
+
+# Notify user and clean up
+echo "Duplicate file scanning completed."
+echo "Report saved to $OUTPUT_FILE"
+
+# End time tracking
+END_TIME=$(date +%s)
+DURATION=$((END_TIME - START_TIME))
+echo "Execution completed in $DURATION seconds."
