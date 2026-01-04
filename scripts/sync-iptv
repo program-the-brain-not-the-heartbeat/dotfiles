@@ -21,16 +21,17 @@ if [[ -f "$LOCAL_SKIP_PATH" ]]; then
     # Join blocklist lines into a single regex pattern
     PATTERN=$(tr '\n' '|' < "$LOCAL_SKIP_PATH" | sed 's/|$//')
 
-    awk -v pat="$PATTERN" '
-    BEGIN { IGNORECASE=1 }
-    /#EXTINF/ {
-        if ($0 ~ pat) {
-        skip=1; next
+    awk '
+      BEGIN { IGNORECASE=1 }
+      FNR==NR { skip[++n]=$0; next }   # first file: skip list
+      /#EXTINF/ {
+        for (i=1; i<=n; i++) {
+          if (skip[i] != "" && index($0, skip[i])) { drop=1; next }
         }
-    }
-    skip { skip=0; next }
-    { print }
-    ' "$LOCAL_M3U_PATH" > "$LOCAL_M3U_PATH_CLEANED"
+      }
+      drop { drop=0; next }
+     { print }
+    ' "$LOCAL_SKIP_PATH" "$LOCAL_M3U_PATH" > "$LOCAL_M3U_PATH_CLEANED"
 fi
 
 echo "Uploading to VPS..."
