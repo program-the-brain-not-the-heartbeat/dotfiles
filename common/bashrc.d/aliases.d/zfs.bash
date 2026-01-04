@@ -1,5 +1,7 @@
+snapshots() {
+    zfs list -t snapshot -r "${1:-tank}"
+}
 
-alias snapshots="zfs list -t snapshot -r ${1:-tank}"
 rmsnapshots() {
     local POOL="$1"
     local DAYS="${2:-30}"
