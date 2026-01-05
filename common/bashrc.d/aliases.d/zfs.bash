@@ -63,5 +63,5 @@ snapshot() {
   fi
 
   # List recursively; print relative paths (cleaner)
-  ( cd "$snapdir" && find . -mindepth 1 -print | sed 's#^\./##' )
+  ( builtin cd "$snapdir" && find . -mindepth 1 -print | sed 's#^\./##' )
 }
