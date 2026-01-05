@@ -38,7 +38,6 @@ link_file() {
 
     # If target is a symlink (valid or broken), remove it
     if [[ -L "$target" ]]; then
-        echo "  Removing existing symlink..."
         rm -f "$target"
     fi
 
@@ -51,9 +50,9 @@ link_file() {
 
 
 sudo apt update -qq
-sudo apt install -y -qq git jq bat curl wget htop nano tmux
-sudo groupadd admins || true
-sudo groupadd developers || true
+sudo apt install -y -qq git jq bat curl wget htop nano tmux > /dev/null 2>&1
+getent group admins >/dev/null || sudo groupadd admins
+getent group developers >/dev/null || sudo groupadd developers
 
 
 
