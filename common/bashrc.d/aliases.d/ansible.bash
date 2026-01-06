@@ -2,61 +2,40 @@
 
 playbook() {
     local base_dir="/opt/mutexlabs/ansible/playbooks"
-    local file="${1-}"
-    local path
+    local root_dir="/opt/mutexlabs/ansible"
 
-    if [[ -z "$file" ]]; then
+    # capture and remove the playbook argument from the arg list
+    local play="${1-}"
+    shift || true
+
+    if [[ -z "$play" ]]; then
         echo "Usage: playbook <playbook.yml|playbook.yaml> [ansible-playbook args]" >&2
-        echo "Example: playbook site.yml -i inventory/prod.ini --check --diff" >&2
         return 2
     fi
 
-    # Reject path traversal / absolute paths (force relative playbook name)
-    if [[ "$file" == /* || "$file" == *".."* || "$file" == *"/"* ]]; then
+    # enforce filename-only to avoid ambiguity
+    if [[ "$play" == /* || "$play" == *".."* || "$play" == *"/"* ]]; then
         echo "Error: provide only a playbook filename (no paths). Example: playbook site.yml" >&2
         return 2
     fi
 
-    if [[ ! "$file" =~ \.ya?ml$ ]]; then
-        echo "Error: playbook must end in .yml or .yaml (got: $file)" >&2
+    if [[ ! "$play" =~ \.ya?ml$ ]]; then
+        echo "Error: playbook must end in .yml or .yaml (got: $play)" >&2
         return 2
     fi
 
-    path="${base_dir}/${file}"
-
-    if [[ ! -d "$base_dir" ]]; then
-        echo "Error: playbook base directory not found: $base_dir" >&2
-        return 3
-    fi
+    local path="${base_dir}/${play}"
 
     if [[ ! -f "$path" ]]; then
         echo "Error: playbook not found: $path" >&2
-        # Helpful hint: show close matches (best effort)
-        if command -v ls >/dev/null 2>&1; then
-            echo "Available playbooks in $base_dir:" >&2
-            ls -1 "$base_dir" 2>/dev/null | grep -E '\.ya?ml$' | sed 's/^/  - /' >&2 || true
-        fi
         return 4
     fi
 
-    if [[ ! -r "$path" ]]; then
-        echo "Error: playbook is not readable: $path" >&2
-        return 4
-    fi
+    export ANSIBLE_CONFIG="${root_dir}/ansible.cfg"
+    export ANSIBLE_ROLES_PATH="${root_dir}/roles:/etc/ansible/roles:/usr/share/ansible/roles"
 
-    if ! command -v ansible-playbook >/dev/null 2>&1; then
-        echo "Error: ansible-playbook not found in PATH. Activate your venv or install Ansible." >&2
-        return 127
-    fi
-
-    ansible-playbook "$path" "$@"
-    local rc=$?
-
-    if (( rc != 0 )); then
-        echo "Error: ansible-playbook failed (exit code: $rc)" >&2
-    fi
-
-    return "$rc"
+    echo "DEBUG: /usr/bin/ansible-playbook '$path' $*" >&2
+    /usr/bin/ansible-playbook "$path" "$@"
 }
 
 ainv() {
