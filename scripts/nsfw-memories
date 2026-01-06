@@ -1,0 +1,284 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+CONTAINER="/vault/media/nsfw-photos.veracrypt"
+MOUNTPOINT="/mnt/memories"
+MAX_SLOTS=64
+
+# Auto-unmount settings (idle)
+IDLE_MINUTES_DEFAULT=60
+AUTO_UMOUNT=1
+IDLE_MINUTES="$IDLE_MINUTES_DEFAULT"
+
+PIDFILE="/run/user/$(id -u)/nsfw-memories-idle.pid"
+LOCKFILE="/run/user/$(id -u)/nsfw-memories.lock"
+
+usage() {
+  cat <<EOF
+Usage: nsfw-memories [--readonly|--ro] [--slot N] [--container PATH] [--mountpoint PATH]
+                     [--idle-minutes N] [--no-auto-umount] [--status] [--stop-watcher]
+
+Defaults:
+  container:        $CONTAINER
+  mountpoint:       $MOUNTPOINT
+  idle auto-umount: enabled
+  idle-minutes:     $IDLE_MINUTES_DEFAULT
+
+Flags:
+  --readonly, --ro        Mount read-only
+  --slot N                Use VeraCrypt slot N (otherwise auto-select a free slot)
+  --container PATH        Override container path
+  --mountpoint PATH       Override mountpoint
+  --idle-minutes N        Auto-unmount after N minutes of no activity (default: $IDLE_MINUTES_DEFAULT)
+  --no-auto-umount        Disable idle auto-unmount watcher
+  --status                Show mount + watcher status
+  --stop-watcher          Stop the idle watcher (does not unmount)
+  -h, --help              Show help
+
+Examples:
+  nsfw-memories
+  nsfw-memories --ro
+  nsfw-memories --idle-minutes 30
+  nsfw-memories --no-auto-umount
+  nsfw-memories --status
+  nsfw-memories --stop-watcher
+EOF
+}
+
+err()  { echo "Error: $*" >&2; }
+note() { echo "$*" >&2; }
+
+find_free_slot() {
+  local used slot
+  used="$(
+    sudo veracrypt --text --list 2>/dev/null \
+      | awk '
+          BEGIN { IGNORECASE=1 }
+          /slot/ {
+            for (i=1; i<=NF; i++) {
+              if (tolower($i) ~ /^slot/ && (i+1) <= NF) {
+                x=$(i+1);
+                gsub(/[^0-9]/, "", x);
+                if (x ~ /^[0-9]+$/) print x;
+              }
+            }
+          }
+        ' \
+      | sort -n | uniq || true
+  )"
+
+  for slot in $(seq 1 "$MAX_SLOTS"); do
+    if ! grep -qx "$slot" <<<"$used"; then
+      echo "$slot"
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+is_mounted() {
+  mountpoint -q "$MOUNTPOINT"
+}
+
+stop_watcher() {
+  if [[ -f "$PIDFILE" ]]; then
+    local pid
+    pid="$(cat "$PIDFILE" 2>/dev/null || true)"
+    if [[ -n "${pid:-}" ]] && kill -0 "$pid" 2>/dev/null; then
+      note "Stopping watcher (pid=$pid)"
+      kill "$pid" 2>/dev/null || true
+    fi
+    rm -f "$PIDFILE" 2>/dev/null || true
+  fi
+}
+
+status() {
+  if is_mounted; then
+    note "Mount:   mounted at $MOUNTPOINT"
+  else
+    note "Mount:   not mounted"
+  fi
+
+  if [[ -f "$PIDFILE" ]]; then
+    local pid
+    pid="$(cat "$PIDFILE" 2>/dev/null || true)"
+    if [[ -n "${pid:-}" ]] && kill -0 "$pid" 2>/dev/null; then
+      note "Watcher: running (pid=$pid)"
+    else
+      note "Watcher: stale pidfile (removing)"
+      rm -f "$PIDFILE" 2>/dev/null || true
+      note "Watcher: not running"
+    fi
+  else
+    note "Watcher: not running"
+  fi
+}
+
+start_idle_watcher() {
+  # Requires inotifywait
+  command -v inotifywait >/dev/null 2>&1 || {
+    err "inotifywait not found. Install: sudo apt-get install -y inotify-tools"
+    return 127
+  }
+
+  # Stop any existing watcher for this mountpoint
+  stop_watcher
+
+  # Background watcher: reset deadline on any activity. Unmount after idle threshold.
+  (
+    set -euo pipefail
+
+    local idle_seconds=$(( IDLE_MINUTES * 60 ))
+    local deadline
+    deadline=$(( $(date +%s) + idle_seconds ))
+
+    # -r recursive, watch common activity events
+    # Any event extends the deadline.
+    while true; do
+      if ! mountpoint -q "$MOUNTPOINT"; then
+        exit 0
+      fi
+
+      # Wait up to 5 seconds for any event; if event occurs, extend deadline.
+      if inotifywait -q -r -t 5 \
+          -e access -e open -e modify -e attrib -e close_write -e create -e delete -e move \
+          "$MOUNTPOINT" >/dev/null 2>&1; then
+        deadline=$(( $(date +%s) + idle_seconds ))
+        continue
+      fi
+
+      # No event in last 5 seconds; check deadline
+      if (( $(date +%s) >= deadline )); then
+        # Double-check mount still present before dismount
+        if mountpoint -q "$MOUNTPOINT"; then
+          logger -t nsfw-memories "Idle timeout reached (${IDLE_MINUTES}m). Dismounting $MOUNTPOINT"
+          sudo veracrypt --dismount "$MOUNTPOINT" >/dev/null 2>&1 || true
+        fi
+        exit 0
+      fi
+    done
+  ) &
+
+  local watcher_pid=$!
+  echo "$watcher_pid" > "$PIDFILE"
+  disown "$watcher_pid" 2>/dev/null || true
+
+  note "Idle watcher started (pid=$watcher_pid, idle=${IDLE_MINUTES}m)"
+}
+
+readonly_flag=0
+slot=""
+
+# Parse args
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --readonly|--ro)
+      readonly_flag=1
+      shift
+      ;;
+    --slot)
+      slot="${2-}"
+      [[ -n "$slot" && "$slot" =~ ^[0-9]+$ ]] || { err "--slot requires a numeric value"; exit 2; }
+      shift 2
+      ;;
+    --container)
+      CONTAINER="${2-}"
+      [[ -n "$CONTAINER" ]] || { err "--container requires a path"; exit 2; }
+      shift 2
+      ;;
+    --mountpoint)
+      MOUNTPOINT="${2-}"
+      [[ -n "$MOUNTPOINT" ]] || { err "--mountpoint requires a path"; exit 2; }
+      shift 2
+      ;;
+    --idle-minutes)
+      IDLE_MINUTES="${2-}"
+      [[ -n "$IDLE_MINUTES" && "$IDLE_MINUTES" =~ ^[0-9]+$ && "$IDLE_MINUTES" -ge 1 ]] || {
+        err "--idle-minutes requires an integer >= 1"
+        exit 2
+      }
+      shift 2
+      ;;
+    --no-auto-umount)
+      AUTO_UMOUNT=0
+      shift
+      ;;
+    --status)
+      status
+      exit 0
+      ;;
+    --stop-watcher)
+      stop_watcher
+      exit 0
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      err "Unknown argument: $1"
+      usage >&2
+      exit 2
+      ;;
+  esac
+done
+
+# Single-instance guard (prevents concurrent mounts/races)
+mkdir -p "$(dirname "$LOCKFILE")"
+exec 9>"$LOCKFILE"
+if ! flock -n 9; then
+  err "Another nsfw-memories process is running."
+  exit 10
+fi
+
+# Preconditions
+command -v veracrypt >/dev/null 2>&1 || { err "veracrypt not found in PATH"; exit 127; }
+[[ -f "$CONTAINER" ]] || { err "container not found: $CONTAINER"; exit 1; }
+
+# Ensure mountpoint exists
+if [[ ! -d "$MOUNTPOINT" ]]; then
+  note "Creating mountpoint: $MOUNTPOINT"
+  sudo mkdir -p "$MOUNTPOINT"
+fi
+
+# Refuse to mount over an existing mount
+if is_mounted; then
+  note "Already mounted at $MOUNTPOINT (nothing to do)"
+  # Ensure watcher is running if enabled
+  if [[ "$AUTO_UMOUNT" -eq 1 ]]; then
+    start_idle_watcher
+  fi
+  exit 0
+fi
+
+# Refuse to mount over non-empty directory (safety guard)
+if find "$MOUNTPOINT" -mindepth 1 -maxdepth 1 -print -quit 2>/dev/null | grep -q .; then
+  err "mountpoint is not empty: $MOUNTPOINT"
+  err "Refusing to mount over existing data. Empty it or choose a different mountpoint."
+  exit 3
+fi
+
+# Auto-pick a free slot if not provided
+if [[ -z "$slot" ]]; then
+  slot="$(find_free_slot || true)"
+fi
+
+# Build VeraCrypt args
+vc_args=(--text --mount)
+if [[ -n "$slot" ]]; then
+  vc_args+=(--slot "$slot")
+fi
+if [[ "$readonly_flag" -eq 1 ]]; then
+  vc_args+=(--mount-options=ro)
+fi
+
+note "Mounting $CONTAINER -> $MOUNTPOINT (slot=${slot:-auto}, readonly=$readonly_flag)"
+sudo veracrypt "${vc_args[@]}" "$CONTAINER" "$MOUNTPOINT"
+
+note "Mounted at $MOUNTPOINT"
+
+# Start idle watcher if enabled
+if [[ "$AUTO_UMOUNT" -eq 1 ]]; then
+  start_idle_watcher
+fi
