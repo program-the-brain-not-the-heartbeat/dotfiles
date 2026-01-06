@@ -34,8 +34,9 @@ playbook() {
     export ANSIBLE_CONFIG="${root_dir}/ansible.cfg"
     export ANSIBLE_ROLES_PATH="${root_dir}/roles:/etc/ansible/roles:/usr/share/ansible/roles"
 
-    echo "DEBUG: /usr/bin/ansible-playbook '$path' $*" >&2
-    /usr/bin/ansible-playbook "$path" "$@"
+    local ap
+    ap="$(command -v ansible-playbook)" || { echo "ansible-playbook not found" >&2; return 127; }
+    "$ap" "$path" "$@"
 }
 
 ainv() {
