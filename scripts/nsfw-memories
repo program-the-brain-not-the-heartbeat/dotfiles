@@ -17,6 +17,7 @@ usage() {
   cat <<EOF
 Usage: nsfw-memories [--readonly|--ro] [--slot N] [--container PATH] [--mountpoint PATH]
                      [--idle-minutes N] [--no-auto-umount] [--status] [--stop-watcher]
+                     [--unmount|--umount]
 
 Defaults:
   container:        $CONTAINER
@@ -33,6 +34,7 @@ Flags:
   --no-auto-umount        Disable idle auto-unmount watcher
   --status                Show mount + watcher status
   --stop-watcher          Stop the idle watcher (does not unmount)
+  --unmount, --umount     Safely dismount the mountpoint and stop the watcher
   -h, --help              Show help
 
 Examples:
@@ -42,6 +44,7 @@ Examples:
   nsfw-memories --no-auto-umount
   nsfw-memories --status
   nsfw-memories --stop-watcher
+  nsfw-memories --unmount
 EOF
 }
 
@@ -93,6 +96,25 @@ stop_watcher() {
   fi
 }
 
+do_unmount() {
+  # Stop watcher first to avoid races
+  stop_watcher
+
+  if ! mountpoint -q "$MOUNTPOINT"; then
+    note "Not mounted: $MOUNTPOINT"
+    return 0
+  fi
+
+  note "Dismounting $MOUNTPOINT"
+  if sudo veracrypt --dismount "$MOUNTPOINT"; then
+    note "Unmounted $MOUNTPOINT"
+    return 0
+  fi
+
+  err "Failed to unmount $MOUNTPOINT"
+  return 1
+}
+
 status() {
   if is_mounted; then
     note "Mount:   mounted at $MOUNTPOINT"
@@ -129,12 +151,12 @@ start_idle_watcher() {
   (
     set -euo pipefail
 
-    local idle_seconds=$(( IDLE_MINUTES * 60 ))
-    local deadline
-    deadline=$(( $(date +%s) + idle_seconds ))
+    # Critical: do not inherit the parent lock FD (prevents --unmount from hanging)
+    exec 9>&- 2>/dev/null || true
 
-    # -r recursive, watch common activity events
-    # Any event extends the deadline.
+    local idle_seconds=$(( IDLE_MINUTES * 60 ))
+    local deadline=$(( $(date +%s) + idle_seconds ))
+
     while true; do
       if ! mountpoint -q "$MOUNTPOINT"; then
         exit 0
@@ -150,7 +172,6 @@ start_idle_watcher() {
 
       # No event in last 5 seconds; check deadline
       if (( $(date +%s) >= deadline )); then
-        # Double-check mount still present before dismount
         if mountpoint -q "$MOUNTPOINT"; then
           logger -t nsfw-memories "Idle timeout reached (${IDLE_MINUTES}m). Dismounting $MOUNTPOINT"
           sudo veracrypt --dismount "$MOUNTPOINT" >/dev/null 2>&1 || true
@@ -169,6 +190,7 @@ start_idle_watcher() {
 
 readonly_flag=0
 slot=""
+ACTION="mount"
 
 # Parse args
 while [[ $# -gt 0 ]]; do
@@ -212,6 +234,10 @@ while [[ $# -gt 0 ]]; do
       stop_watcher
       exit 0
       ;;
+    --unmount|--umount)
+      ACTION="unmount"
+      shift
+      ;;
     -h|--help)
       usage
       exit 0
@@ -227,9 +253,25 @@ done
 # Single-instance guard (prevents concurrent mounts/races)
 mkdir -p "$(dirname "$LOCKFILE")"
 exec 9>"$LOCKFILE"
-if ! flock -n 9; then
-  err "Another nsfw-memories process is running."
-  exit 10
+
+if [[ "$ACTION" == "unmount" ]]; then
+  # Unmount should WAIT for the lock so it can always proceed safely.
+  # Use a timeout to avoid hanging forever if something is truly stuck.
+  if ! flock -w 10 9; then
+    err "Timed out waiting for lock (another nsfw-memories process is stuck/running)."
+    exit 10
+  fi
+else
+  # Mount remains non-blocking to prevent accidental concurrent runs.
+  if ! flock -n 9; then
+    err "Another nsfw-memories process is running."
+    exit 10
+  fi
+fi
+
+if [[ "$ACTION" == "unmount" ]]; then
+  do_unmount
+  exit $?
 fi
 
 # Preconditions
@@ -245,7 +287,11 @@ fi
 # Refuse to mount over an existing mount
 if is_mounted; then
   note "Already mounted at $MOUNTPOINT (nothing to do)"
-  # Ensure watcher is running if enabled
+
+  # Release lock before starting watcher (prevents lock inheritance)
+  flock -u 9 || true
+  exec 9>&- || true
+
   if [[ "$AUTO_UMOUNT" -eq 1 ]]; then
     start_idle_watcher
   fi
@@ -265,7 +311,7 @@ if [[ -z "$slot" ]]; then
 fi
 
 # Build VeraCrypt args
-vc_args=(--text --mount)
+vc_args=(--text --pim=0 --keyfiles="" --protect-hidden=no --mount)
 if [[ -n "$slot" ]]; then
   vc_args+=(--slot "$slot")
 fi
@@ -276,7 +322,14 @@ fi
 note "Mounting $CONTAINER -> $MOUNTPOINT (slot=${slot:-auto}, readonly=$readonly_flag)"
 sudo veracrypt "${vc_args[@]}" "$CONTAINER" "$MOUNTPOINT"
 
+sudo chown -R matt:matt "$MOUNTPOINT"
+sudo chmod -R u+rwX,g+rwX "$MOUNTPOINT"
+
 note "Mounted at $MOUNTPOINT"
+
+# Release lock before starting watcher (prevents lock inheritance)
+flock -u 9 || true
+exec 9>&- || true
 
 # Start idle watcher if enabled
 if [[ "$AUTO_UMOUNT" -eq 1 ]]; then
